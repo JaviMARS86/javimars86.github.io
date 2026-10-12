@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Javi A. Ibáñez Matles</title>
-<meta name="description" content="Javi A. Ibáñez Matles. Mechanical engineering student at the University of Rochester. Drones, rockets, shaders and eclipses.">
+<meta name="description" content="Javi A. Ibáñez Matles. Mechanical engineering student at the University of Rochester. Drones, rockets, shaders, eclipse photos and a well traveled plush dog.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..800,0..100,0..1;1,9..144,300..800,0..100,0..1&family=Bricolage+Grotesque:opsz,wght@12..96,300..700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -138,13 +138,53 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 .build .more{margin-top:18px;display:inline-block}
 @media(max-width:860px){.build,.build.flip{grid-template-columns:1fr}.build.flip .stage{order:0}#drone{height:340px}}
 
-/* eclipse */
-#eclipse{height:300vh;padding:0}
+/* about portrait */
+.portrait{margin-top:40px}
+.portrait img,.feature img{width:100%;height:auto;border-radius:4px}
+.portrait figcaption,.feature figcaption{color:var(--dim);font-size:.9rem;margin-top:10px}
+
+/* photos */
+.feature{margin-top:48px}
+
+/* eclipse photo sequence */
+#eclipse{height:720vh;padding:0;background:#03050d}
 #eclipse .sticky{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
-#eclipse canvas{width:100%;height:100%}
-#eclipse .over{position:absolute;left:0;right:0;bottom:0;padding-bottom:calc(clamp(32px,6vh,72px) + env(safe-area-inset-bottom,0px))}
-#eclipse .over p{max-width:46ch;color:var(--chalk);text-shadow:0 1px 12px rgba(0,0,0,.5)}
-#eclipse .phase{font-family:var(--serif);font-size:clamp(1.3rem,2.4vw,1.8rem);color:var(--gold);min-height:1.3em;margin-top:.6em;font-variation-settings:"SOFT" 100,"WONK" 1}
+#eclipse .frame{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.06);transition:opacity .7s ease,transform 7s ease-out}
+#eclipse .frame.on{opacity:1;transform:scale(1)}
+#eclipse .frame.fit{display:block}
+#eclipse .frame.fit img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:75% 30%}
+@media(max-width:760px){#eclipse .frame.fit img{object-position:50% 20%}}
+#eclipse .frame.fit img.bg{object-fit:cover;filter:blur(40px) brightness(.45);transform:scale(1.15)}
+.painted{display:grid;grid-template-columns:minmax(0,.8fr) 1fr;gap:clamp(28px,5vw,72px);align-items:center;margin-top:72px}
+.painted img{width:100%;height:auto;border-radius:4px}
+.painted p{color:var(--dim)}
+@media(max-width:760px){.painted{grid-template-columns:1fr}}
+#eclipse .scrim{position:absolute;inset:0;background:linear-gradient(to top,rgba(3,5,13,.92) 0%,rgba(3,5,13,.55) 32%,rgba(3,5,13,0) 60%);pointer-events:none}
+#eclipse .over{position:absolute;left:0;right:0;bottom:0;padding-bottom:calc(clamp(28px,6vh,64px) + env(safe-area-inset-bottom,0px))}
+#eclipse .intro{max-width:52ch;color:var(--chalk);opacity:.9}
+#eclipse .ecap{margin-top:1.4em;display:grid;grid-template-columns:auto 1fr;column-gap:18px;align-items:baseline;max-width:62ch}
+#eclipse .count{font-variant-numeric:tabular-nums;color:var(--dim);font-size:.9rem;grid-row:span 2}
+#eclipse .phase{font-family:var(--serif);font-size:clamp(1.25rem,2.3vw,1.75rem);color:var(--gold);line-height:1.25;font-variation-settings:"SOFT" 100,"WONK" 1}
+#eclipse .gear{color:var(--dim);font-size:.9rem;margin-top:.3em}
+#eclipse .ticks{position:absolute;right:clamp(16px,3vw,40px);top:50%;transform:translateY(-50%);display:grid;gap:10px}
+#eclipse .ticks i{display:block;width:3px;height:26px;border-radius:3px;background:rgba(239,232,216,.25);transition:background .4s}
+#eclipse .ticks i.on{background:var(--gold)}
+
+/* apollo */
+.stamps{list-style:none;display:flex;flex-wrap:wrap;gap:14px;margin:36px 0 8px}
+.stamps li{font-family:var(--serif);font-size:1rem;color:var(--gold);border:1.5px solid var(--gold);outline:1.5px solid rgba(232,180,74,.45);outline-offset:3px;border-radius:999px;padding:6px 16px;transform:rotate(var(--sr,0deg))}
+.stamps li:nth-child(odd){--sr:-3deg}.stamps li:nth-child(3n){--sr:2deg}
+.prints{display:grid;grid-template-columns:.8fr 1fr 1fr;grid-template-areas:"paris lake lake" "paris c1 c2";gap:clamp(18px,3vw,36px);margin-top:48px;align-items:start}
+.p-paris{grid-area:paris}.p-lake{grid-area:lake}.p-cies1{grid-area:c1}.p-cies2{grid-area:c2}
+.print{background:var(--chalk);padding:12px 12px 14px;border-radius:2px;transform:rotate(var(--r));transition:transform .4s ease;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.print:hover{transform:rotate(0) scale(1.02)}
+.print img{width:100%;height:auto;display:block}
+.print figcaption{font-family:var(--serif);color:var(--deep);font-size:1rem;line-height:1.3;margin-top:10px;font-variation-settings:"SOFT" 100,"WONK" 1}
+@media(max-width:760px){
+  .prints{grid-template-columns:1fr 1fr;grid-template-areas:"lake lake" "paris c1" "paris c2"}
+  .print{--r:0deg!important}
+}
+@media(max-width:480px){.prints{grid-template-columns:1fr;grid-template-areas:"lake" "paris" "c1" "c2"}}
 
 /* off the clock */
 .off{display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(28px,5vw,72px);margin-top:56px;align-items:start}
@@ -178,6 +218,8 @@ footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));color:var(--d
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   .reveal{animation:none;opacity:1;transform:none}
+  #eclipse .frame{transition:none;transform:none}
+  .print,.print:hover{transition:none}
   .slot .bar i{transition:none}
   .slot.loop .bar i{animation:none;width:100%!important}
   .term .caret{animation:none}
@@ -192,7 +234,8 @@ footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));color:var(--d
     <li><a href="#path">Path</a></li>
     <li><a href="#classes">Classes</a></li>
     <li><a href="#builds">Builds</a></li>
-    <li><a href="#off">Off the clock</a></li>
+    <li><a href="#photos">Photos</a></li>
+    <li><a href="#apollo">Apollo</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
 </nav>
@@ -214,7 +257,13 @@ footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));color:var(--d
 <!-- ABOUT -->
 <section id="about">
   <div class="wrap about">
-    <p class="pull">I've wanted a lot of jobs. Actor, writer, YouTuber, astronaut. The common thread is building whatever I want. So: engineering.</p>
+    <div>
+      <p class="pull">I've wanted a lot of jobs. Actor, writer, YouTuber, astronaut. The common thread is building whatever I want. So: engineering.</p>
+      <figure class="portrait">
+        <img src="images/javi-and-apollo.jpg" width="1600" height="1060" loading="lazy" alt="Javi crouching in front of the sea, holding Apollo, a plush dog">
+        <figcaption>Me and Apollo. He gets his own section further down.</figcaption>
+      </figure>
+    </div>
     <div class="about-body">
       <p>I'm Javi. Spanish and American, raised in Benetússer, Valencia, with a mom from Michigan. That means pretty much every summer on this side of the Atlantic.</p>
       <p>Space got me hooked as a kid. A 7th grade Technology class made it official. Honors math later made math my favorite subject, which surprised me too.</p>
@@ -397,16 +446,85 @@ footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));color:var(--d
   </div>
 </section>
 
+<!-- PHOTOS -->
+<section id="photos">
+  <div class="wrap">
+    <h2>Through the lens</h2>
+    <p class="lede">I shoot on a Nikon D5100. Mostly the sky, landscapes, and one very patient plush dog. Working at a media lab does not help my camera gear wishlist.</p>
+    <figure class="feature">
+      <img src="images/church-through-leaves.jpg" width="2000" height="1325" loading="lazy" alt="A church bell tower and blue dome above a town, framed by out of focus leaves on a grey evening">
+      <figcaption>Shot through the branches on a grey evening. Nikon D5100.</figcaption>
+    </figure>
+    <div class="painted">
+      <figure>
+        <img src="images/painting-space.jpg" width="1200" height="1600" loading="lazy" alt="Javi's painting of space: purple and violet sky bands with an Earth-like planet, a red planet and two small moons">
+      </figure>
+      <div>
+        <h3>Not everything is a photo</h3>
+        <p>I've always wished I was better at drawing and painting. This one came out right. It took about two hours, and it's one of my favorite things I've ever made.</p>
+        <p>The subject? Space, obviously.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ECLIPSE -->
-<section id="eclipse" aria-label="Scroll driven replay of a total solar eclipse">
+<section id="eclipse" aria-label="Scroll through photos of the August 12, 2026 total solar eclipse">
   <div class="sticky">
-    <canvas aria-hidden="true"></canvas>
+    <div class="frames">
+      <div class="frame fit">
+        <img class="bg" src="images/eclipse-0-glasses-on.jpg" loading="lazy" alt="">
+        <img src="images/eclipse-0-glasses-on.jpg" loading="lazy" alt="Javi and his girlfriend lying on a picnic blanket wearing eclipse glasses, with a bag of sunflower seeds">
+      </div>
+      <img class="frame" src="images/eclipse-1-partial.jpg" loading="lazy" alt="A thin orange crescent of the Sun against a black sky" style="object-position:50% 50%">
+      <img class="frame" src="images/eclipse-2-totality-wide.jpg" loading="lazy" alt="A tiny ring of light from the totally eclipsed Sun, low over dark hills" style="object-position:50% 50%">
+      <img class="frame" src="images/eclipse-3-totality-close.jpg" loading="lazy" alt="Close up of totality: the black Moon ringed by the white corona, with a pink prominence on the edge" style="object-position:50% 48%">
+      <img class="frame" src="images/eclipse-4-corona-phone.jpg" loading="lazy" alt="The eclipsed Sun with a bright orange corona above a mountain ridge" style="object-position:50% 50%">
+      <img class="frame" src="images/eclipse-5-town-lights.jpg" loading="lazy" alt="Totality low over the horizon while the lights of a small town glow below" style="object-position:20% 50%">
+      <img class="frame" src="images/eclipse-6-diamond-ring.jpg" loading="lazy" alt="The diamond ring: one bright bead of sunlight on the edge of the Moon, over the hills" style="object-position:18% 32%">
+      <img class="frame" src="images/eclipse-7-partial-filter.jpg" loading="lazy" alt="A red crescent Sun seen through a solar filter" style="object-position:50% 45%">
+    </div>
+    <div class="scrim" aria-hidden="true"></div>
+    <div class="ticks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <div class="over">
       <div class="wrap">
         <h2>Looking up</h2>
-        <p>August 12, 2026. Total solar eclipse from Rubielos de Mora, Teruel, with my family. The Sun was low in the sky, so I spent days checking horizon lines and totality times so a mountain wouldn't ruin it. It didn't. Keep scrolling to replay it.</p>
-        <p class="phase" id="phase" aria-live="polite"></p>
+        <p class="intro">August 12, 2026. Total solar eclipse from Rubielos de Mora, Teruel, with my family. The Sun was low, so I spent days checking horizon lines and totality times so a mountain wouldn't ruin it. It didn't. Scroll through it.</p>
+        <div class="ecap">
+          <span class="count" id="ecCount">1 / 8</span>
+          <p class="phase" id="phase"></p>
+          <p class="gear" id="gear"></p>
+        </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- APOLLO -->
+<section id="apollo">
+  <div class="wrap">
+    <h2>Meet Apollo</h2>
+    <p class="lede">Apollo is a plush dog. My girlfriend and I call him our son. He's been to Rochester, Benetússer, Paris, the north of Spain and the south. Wherever I go, he goes, which makes him the most photographed member of the family.</p>
+    <ul class="stamps" aria-label="Places Apollo has been">
+      <li>Rochester</li><li>Benetússer</li><li>Paris</li><li>Asturias</li><li>Galicia</li><li>South of Spain</li>
+    </ul>
+    <div class="prints">
+      <figure class="print p-paris" style="--r:-2.5deg">
+        <img src="images/apollo-paris.jpg" width="927" height="1400" loading="lazy" alt="Apollo on a railing at night with the lit up Eiffel Tower behind him">
+        <figcaption>Paris, after dark.</figcaption>
+      </figure>
+      <figure class="print p-lake" style="--r:1.5deg">
+        <img src="images/apollo-covadonga.jpg" width="1600" height="1060" loading="lazy" alt="Apollo sitting on a wooden fence above Lago Enol, with a mountain in the clouds">
+        <figcaption>Lago Enol, Lagos de Covadonga. The mountain kept its head in the clouds.</figcaption>
+      </figure>
+      <figure class="print p-cies1" style="--r:-1.5deg">
+        <img src="images/apollo-cies-close.jpg" width="1600" height="1060" loading="lazy" alt="Apollo in sharp focus on the rocks, with a blurry beach and forest behind">
+        <figcaption>Islas Cíes, Galicia. Apollo in focus.</figcaption>
+      </figure>
+      <figure class="print p-cies2" style="--r:2deg">
+        <img src="images/apollo-cies.jpg" width="1600" height="1060" loading="lazy" alt="The same rocks with the beach and forest in focus and Apollo blurry in front">
+        <figcaption>Same rock, the beach in focus. Apollo did not approve.</figcaption>
+      </figure>
     </div>
   </div>
 </section>
@@ -1085,86 +1203,39 @@ const launch = { a: 52, v: 22 };
   });
 })();
 
-/* ---------------- ECLIPSE ---------------- */
+/* ---------------- ECLIPSE PHOTOS ---------------- */
 (function eclipse(){
   const sec = $('#eclipse'); if (!sec) return;
-  const cv = sec.querySelector('canvas'), phase = $('#phase');
-  const st = fitCanvas(cv, () => draw());
-  const stars = Array.from({ length: 160 }, (_, i) => [Math.random(), Math.random() * 0.75, Math.random() * 1.3 + 0.3]);
-  const streak = Array.from({ length: 22 }, () => [Math.random() * Math.PI * 2, 1.6 + Math.random() * 1.6, 0.2 + Math.random() * 0.5]);
-  const overlap = (R, r, d) => {
-    if (d >= R + r) return 0;
-    if (d <= Math.abs(R - r)) return Math.PI * Math.min(R, r) ** 2;
-    const a = r * r * Math.acos((d * d + r * r - R * R) / (2 * d * r));
-    const b = R * R * Math.acos((d * d + R * R - r * r) / (2 * d * R));
-    const c = 0.5 * Math.sqrt((-d + r + R) * (d + r - R) * (d - r + R) * (d + r + R));
-    return a + b - c;
-  };
-  let lastPhase = '';
-  function draw(){
-    const { ctx, w, h } = st; if (!w) return;
-    const rc = sec.getBoundingClientRect(), total = rc.height - window.innerHeight;
-    const p = clamp(-rc.top / total, 0, 1);
-    const R = Math.min(w, h) * 0.11, Rm = R * 1.03;
-    const cx = w * 0.62, cy = h * (0.3 + 0.1 * p);
-    const q = p - 0.5, sgn = Math.sign(q) || 1;
-    const off = sgn * Math.max(0, Math.abs(q) - 0.05) / 0.45 * 2.4 * R;
-    const d = Math.abs(off);
-    const cov = clamp(overlap(R, Rm, d) / (Math.PI * R * R), 0, 1);
-    const b = Math.pow(1 - cov, 0.55);
-    // sky
-    const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, mixHex('#060c22', '#2f5f9e', b));
-    g.addColorStop(0.65, mixHex('#1b2348', '#7aa3d6', b));
-    g.addColorStop(1, mixHex('#7a4434', '#f0b06a', b));
-    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-    // stars
-    const sa = Math.pow(1 - b, 3);
-    if (sa > 0.01){ ctx.fillStyle = `rgba(239,232,216,${sa})`; for (const s of stars){ ctx.fillRect(s[0] * w, s[1] * h, s[2], s[2]); } }
-    // corona
-    const ca = clamp((cov - 0.97) / 0.03, 0, 1);
-    if (ca > 0){
-      const cg = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 3.4);
-      cg.addColorStop(0, `rgba(255,250,235,${0.85 * ca})`); cg.addColorStop(0.25, `rgba(220,230,255,${0.35 * ca})`); cg.addColorStop(1, 'rgba(200,210,255,0)');
-      ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx, cy, R * 3.4, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = `rgba(255,248,230,${0.12 * ca})`;
-      for (const [a, len, wd] of streak){ ctx.lineWidth = wd * R * 0.07; ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); ctx.lineTo(cx + Math.cos(a) * R * len, cy + Math.sin(a) * R * len); ctx.stroke(); }
-    }
-    // sun
-    ctx.save(); ctx.shadowColor = 'rgba(255,220,150,.9)'; ctx.shadowBlur = 60 * b;
-    ctx.fillStyle = '#FFF4D8'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-    // moon
-    ctx.save();
-    if (cov < 0.97){ ctx.beginPath(); ctx.arc(cx, cy, R + 1, 0, Math.PI * 2); ctx.clip(); }
-    ctx.fillStyle = mixHex('#05081a', '#2a4f8a', b * 0.6);
-    ctx.beginPath(); ctx.arc(cx + off, cy, Rm, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-    // diamond ring
-    if (cov > 0.94 && cov < 0.9995 && d > 0){
-      const dx = cx - sgn * R * 0.99, k = 1 - Math.abs(cov - 0.975) / 0.04;
-      const dg = ctx.createRadialGradient(dx, cy, 0, dx, cy, R * 0.9);
-      dg.addColorStop(0, `rgba(255,255,255,${clamp(k, 0, 1)})`); dg.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = dg; ctx.beginPath(); ctx.arc(dx, cy, R * 0.9, 0, Math.PI * 2); ctx.fill();
-    }
-    // Teruel hills
-    ctx.fillStyle = mixHex('#040815', '#1a2a50', b);
-    ctx.beginPath(); ctx.moveTo(0, h);
-    for (let x = 0; x <= w; x += 6){
-      const y = h * 0.8 - Math.sin(x * 0.004 + 1) * h * 0.05 - Math.sin(x * 0.011) * h * 0.022 - Math.sin(x * 0.031 + 2) * h * 0.008;
-      ctx.lineTo(x, y);
-    }
-    ctx.lineTo(w, h); ctx.closePath(); ctx.fill();
-    // phase label
-    let ph = '';
-    if (cov <= 0) ph = p < 0.5 ? 'Waiting for first contact.' : 'Last contact. Already planning the next one.';
-    else if (cov < 0.6) ph = p < 0.5 ? 'Partial. The Moon takes its first bite.' : 'Partial again. The light comes back.';
-    else if (cov < 0.94) ph = 'Getting dark. And weirdly cold.';
-    else if (cov < 0.9995) ph = 'Diamond ring.';
-    else ph = 'Totality.';
-    if (ph !== lastPhase){ phase.textContent = ph; lastPhase = ph; }
+  const frames = [...sec.querySelectorAll('.frame')], ticks = [...sec.querySelectorAll('.ticks i')];
+  const caps = [
+    ['Before first contact, with my girlfriend. Glasses on, pipas ready.', 'Phone selfie'],
+    ['Partial. The Moon takes its first bite.', 'Pixel phone, through eclipse glasses'],
+    ['Totality. Right where the planning said it would be, just above the hills.', 'Nikon D5100'],
+    ['The corona up close. That pink spot on the edge is a solar prominence.', 'Nikon D5100'],
+    ['Same moment from my phone. Not bad for a phone.', 'Pixel phone'],
+    ['The streetlights in the town below switched on. In August, before sunset.', 'Pixel phone'],
+    ['Diamond ring. One bead of sunlight comes back and totality is over.', 'Nikon D5100'],
+    ['Partial again, through a solar filter. The bite is on the other side now.', 'Nikon D5100 with a solar filter']
+  ];
+  const count = $('#ecCount'), phase = $('#phase'), gear = $('#gear');
+  let cur = -1;
+  // load the first two right away so the section never opens on black
+  frames.slice(0, 2).forEach(f => (f.tagName === 'IMG' ? [f] : f.querySelectorAll('img')).forEach(im => im.loading = 'eager'));
+  function upd(){
+    const r = sec.getBoundingClientRect(), total = r.height - window.innerHeight;
+    const p = clamp(-r.top / total, 0, 0.9999);
+    const i = Math.floor(p * frames.length);
+    if (r.top < window.innerHeight * 1.5) sec.querySelectorAll('img').forEach(f => f.loading = 'eager');
+    if (i === cur) return; cur = i;
+    frames.forEach((f, k) => f.classList.toggle('on', k === i));
+    ticks.forEach((t, k) => t.classList.toggle('on', k <= i));
+    count.textContent = (i + 1) + ' / ' + frames.length;
+    phase.textContent = caps[i][0]; gear.textContent = caps[i][1];
   }
   let pending = false;
-  window.addEventListener('scroll', () => { if (!pending){ pending = true; requestAnimationFrame(() => { pending = false; draw(); }); } }, { passive: true });
+  window.addEventListener('scroll', () => { if (!pending){ pending = true; requestAnimationFrame(() => { pending = false; upd(); }); } }, { passive: true });
+  window.addEventListener('resize', upd);
+  upd();
 })();
 
 /* ---------------- SAVE FILE BARS ---------------- */
