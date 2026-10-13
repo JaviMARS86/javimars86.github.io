@@ -174,17 +174,46 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 .stamps{list-style:none;display:flex;flex-wrap:wrap;gap:14px;margin:36px 0 8px}
 .stamps li{font-family:var(--serif);font-size:1rem;color:var(--gold);border:1.5px solid var(--gold);outline:1.5px solid rgba(232,180,74,.45);outline-offset:3px;border-radius:999px;padding:6px 16px;transform:rotate(var(--sr,0deg))}
 .stamps li:nth-child(odd){--sr:-3deg}.stamps li:nth-child(3n){--sr:2deg}
-.prints{display:grid;grid-template-columns:.8fr 1fr 1fr;grid-template-areas:"paris lake lake" "paris c1 c2";gap:clamp(18px,3vw,36px);margin-top:48px;align-items:start}
-.p-paris{grid-area:paris}.p-lake{grid-area:lake}.p-cies1{grid-area:c1}.p-cies2{grid-area:c2}
+.prints{columns:3 260px;column-gap:clamp(18px,3vw,36px);margin-top:48px}
+.print{break-inside:avoid;margin:0 0 clamp(22px,3vw,40px);display:inline-block;width:100%;--r:-2deg}
+.print:nth-child(2n){--r:1.6deg}.print:nth-child(3n){--r:-1deg}.print:nth-child(5n){--r:2.4deg}
 .print{background:var(--chalk);padding:12px 12px 14px;border-radius:2px;transform:rotate(var(--r));transition:transform .4s ease;box-shadow:0 18px 40px rgba(0,0,0,.35)}
 .print:hover{transform:rotate(0) scale(1.02)}
 .print img{width:100%;height:auto;display:block}
 .print figcaption{font-family:var(--serif);color:var(--deep);font-size:1rem;line-height:1.3;margin-top:10px;font-variation-settings:"SOFT" 100,"WONK" 1}
+@media(max-width:600px){.print,.print:nth-child(n){--r:0deg}}
+
+/* lego stacker */
+.brickbox{margin-top:clamp(32px,4vw,48px);border:1px solid var(--line);border-radius:4px;background:rgba(20,37,77,.38);padding:clamp(18px,3vw,28px)}
+.brick-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:18px}
+.brick-head p{color:var(--dim);max-width:44ch}
+.brick-tools{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.swatches{display:flex;gap:8px}
+.swatches button{width:28px;height:28px;border-radius:6px;background:var(--c);border:2px solid transparent;cursor:pointer;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
+.swatches button[aria-pressed=true]{border-color:var(--chalk);outline:2px solid var(--gold);outline-offset:2px}
+.sizes{display:flex;gap:6px}
+.sizes button{font:inherit;font-size:.88rem;color:var(--chalk);background:transparent;border:1px solid var(--line);border-radius:999px;padding:5px 12px;cursor:pointer}
+.sizes button[aria-pressed=true]{background:var(--gold);color:var(--deep);border-color:var(--gold)}
+.sizes button:hover{border-color:var(--gold)}
+#bricks{width:100%;height:clamp(280px,36vw,440px);cursor:crosshair;touch-action:manipulation;border-radius:3px;background:linear-gradient(#10204a,#0D1938)}
+
+/* built by hand */
+.bento{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:clamp(200px,22vw,280px);gap:clamp(12px,1.6vw,20px);margin-top:48px;
+  grid-template-areas:"galaxy galaxy porsche" "spidey walle porsche" "balloon ship ship"}
+.t-galaxy{grid-area:galaxy}.t-porsche{grid-area:porsche}.t-spidey{grid-area:spidey}.t-walle{grid-area:walle}.t-balloon{grid-area:balloon}.t-ship{grid-area:ship}
+.tile{position:relative;overflow:hidden;border-radius:4px;border:1px solid var(--line);background:var(--navy)}
+.tile img{width:100%;height:100%;object-fit:cover;transition:transform .6s ease}
+.tile:hover img{transform:scale(1.04)}
+.t-spidey img{object-position:50% 40%}.t-balloon img{object-position:50% 30%}.t-porsche img{object-position:50% 35%}.t-walle img{object-position:50% 70%}
+.tile figcaption{position:absolute;left:0;right:0;bottom:0;padding:40px 16px 14px;font-size:.92rem;color:var(--chalk);background:linear-gradient(to top,rgba(8,14,34,.92),rgba(8,14,34,0))}
 @media(max-width:760px){
-  .prints{grid-template-columns:1fr 1fr;grid-template-areas:"lake lake" "paris c1" "paris c2"}
-  .print{--r:0deg!important}
+  .bento{grid-template-columns:1fr 1fr;grid-auto-rows:220px;grid-template-areas:"galaxy galaxy" "porsche spidey" "porsche walle" "balloon ship" "balloon ship"}
 }
-@media(max-width:480px){.prints{grid-template-columns:1fr;grid-template-areas:"lake" "paris" "c1" "c2"}}
+@media(max-width:480px){
+  .bento{grid-template-columns:1fr;grid-auto-rows:auto;grid-template-areas:none}
+  .tile{grid-area:auto!important}.tile img{height:auto;aspect-ratio:4/3}
+  .t-porsche img,.t-spidey img,.t-balloon img{aspect-ratio:3/4}
+}
 
 /* off the clock */
 .off{display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(28px,5vw,72px);margin-top:56px;align-items:start}
@@ -220,6 +249,7 @@ footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));color:var(--d
   .reveal{animation:none;opacity:1;transform:none}
   #eclipse .frame{transition:none;transform:none}
   .print,.print:hover{transition:none}
+  .tile img{transition:none}
   .slot .bar i{transition:none}
   .slot.loop .bar i{animation:none;width:100%!important}
   .term .caret{animation:none}
@@ -236,6 +266,7 @@ footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));color:var(--d
     <li><a href="#builds">Builds</a></li>
     <li><a href="#photos">Photos</a></li>
     <li><a href="#apollo">Apollo</a></li>
+    <li><a href="#off">Off the clock</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
 </nav>
@@ -401,15 +432,19 @@ footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));color:var(--d
 
     <div class="inst row-wide rev">
       <div class="txt">
-        <p class="code">Honors Calculus</p>
-        <h3>Circles that draw squares</h3>
-        <p>The class that made math my favorite subject. Fourier series still feel like a magic trick: stack enough spinning circles and you can draw a square wave.</p>
+        <p class="code">MATH 171 and 172</p>
+        <h3>Polynomials pretending to be sine</h3>
+        <p>Honors Calculus, straight out of Spivak, and the class that made math my favorite subject. Taylor polynomials still feel like a magic trick: add enough terms and a plain polynomial hugs <strong>sin(x)</strong> further and further out.</p>
         <div class="controls">
-          <label>Circles <input id="fTerms" type="range" min="1" max="30" value="4" step="1"><output id="oTerms">4</output></label>
+          <label>Terms <input id="tTerms" type="range" min="1" max="10" value="3" step="1"><output id="oTerms">3</output></label>
         </div>
-        <p style="margin-top:18px">It never gets the corners perfect. That little overshoot has a name: the Gibbs phenomenon.</p>
+        <div class="readout">
+          <div>Degree<b id="tDeg">5</b></div>
+          <div>Close enough until<b id="tGood">|x| &lt; 0</b></div>
+        </div>
+        <p style="margin-top:18px">"Close enough" here means the error stays under 0.01. Past that, the polynomial always peels off. Bounding exactly how much is the remainder term, which I know very well by now.</p>
       </div>
-      <canvas id="fourier" aria-label="Fourier series epicycles drawing a square wave" role="img"></canvas>
+      <canvas id="taylor" aria-label="Plot of sin(x) and its Taylor polynomial, which matches more of the curve as you add terms" role="img"></canvas>
     </div>
 
     <p class="also">Also on the schedule: <strong>WRTG 273</strong>, because engineers write too, and TAing <strong>ME 102</strong>. Past highlights include <strong>Price Theory (ECON 207)</strong>, where I made a poster arguing that batteries alone won't fix the grid.</p>
@@ -506,25 +541,104 @@ footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom,0px));color:var(--d
     <h2>Meet Apollo</h2>
     <p class="lede">Apollo is a plush dog. My girlfriend and I call him our son. He's been to Rochester, Benetússer, Paris, the north of Spain and the south. Wherever I go, he goes, which makes him the most photographed member of the family.</p>
     <ul class="stamps" aria-label="Places Apollo has been">
-      <li>Rochester</li><li>Benetússer</li><li>Paris</li><li>Asturias</li><li>Galicia</li><li>South of Spain</li>
+      <li>Rochester</li><li>Benetússer</li><li>Paris</li><li>Andorra</li><li>Asturias</li><li>Galicia</li><li>South of Spain</li>
     </ul>
     <div class="prints">
-      <figure class="print p-paris" style="--r:-2.5deg">
+      <figure class="print">
         <img src="images/apollo-paris.jpg" width="927" height="1400" loading="lazy" alt="Apollo on a railing at night with the lit up Eiffel Tower behind him">
         <figcaption>Paris, after dark.</figcaption>
       </figure>
-      <figure class="print p-lake" style="--r:1.5deg">
+      <figure class="print">
         <img src="images/apollo-covadonga.jpg" width="1600" height="1060" loading="lazy" alt="Apollo sitting on a wooden fence above Lago Enol, with a mountain in the clouds">
         <figcaption>Lago Enol, Lagos de Covadonga. The mountain kept its head in the clouds.</figcaption>
       </figure>
-      <figure class="print p-cies1" style="--r:-1.5deg">
+      <figure class="print">
+        <img src="images/apollo-andorra.jpg" width="1600" height="1060" loading="lazy" alt="Apollo on a wooden post above a green valley in Andorra, with a long suspension bridge behind him">
+        <figcaption>Andorra, at the second longest hanging bridge in the world. He was very brave.</figcaption>
+      </figure>
+      <figure class="print">
+        <img src="images/apollo-disneyland.jpg" width="1400" height="1050" loading="lazy" alt="Apollo lit up in blue in front of the pink Disneyland Paris castle while snow falls">
+        <figcaption>Disneyland Paris, in the snow.</figcaption>
+      </figure>
+      <figure class="print">
+        <img src="images/apollo-baguette.jpg" width="1050" height="1400" loading="lazy" alt="Apollo sniffing a fresh baguette on a Paris sidewalk">
+        <figcaption>Paris again. He insisted on the baguette.</figcaption>
+      </figure>
+      <figure class="print">
         <img src="images/apollo-cies-close.jpg" width="1600" height="1060" loading="lazy" alt="Apollo in sharp focus on the rocks, with a blurry beach and forest behind">
         <figcaption>Islas Cíes, Galicia. Apollo in focus.</figcaption>
       </figure>
-      <figure class="print p-cies2" style="--r:2deg">
-        <img src="images/apollo-cies.jpg" width="1600" height="1060" loading="lazy" alt="The same rocks with the beach and forest in focus and Apollo blurry in front">
-        <figcaption>Same rock, the beach in focus. Apollo did not approve.</figcaption>
+      <figure class="print">
+        <img src="images/apollo-santiago.jpg" width="927" height="1400" loading="lazy" alt="Apollo in front of the cathedral of Santiago de Compostela, which is out of focus behind him">
+        <figcaption>Santiago de Compostela, at the end of the Camino. We didn't walk it. We were just there.</figcaption>
       </figure>
+      <figure class="print">
+        <img src="images/apollo-cies.jpg" width="1600" height="1060" loading="lazy" alt="The same rocks with the beach and forest in focus and Apollo blurry in front">
+        <figcaption>Back at Cíes, the beach in focus this time. Apollo did not approve.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- BUILT BY HAND -->
+<section id="models">
+  <div class="wrap">
+    <h2>Built by hand</h2>
+    <p class="lede">My other passion: LEGO and model kits. Anything with a manual, too many pieces and a free afternoon. It's how I relax, which probably says a lot about why I picked engineering.</p>
+    <div class="bento">
+      <figure class="tile t-galaxy">
+        <img src="images/build-galaxy.jpg" loading="lazy" alt="A large LEGO mosaic of the Milky Way galaxy in pinks, purples and blues, in a black frame">
+        <figcaption>The Milky Way in LEGO. There's a tiny tile in there that says "You are here."</figcaption>
+      </figure>
+      <figure class="tile t-porsche">
+        <img src="images/build-porsche.jpg" loading="lazy" alt="Javi smiling at a kitchen table while building a white LEGO Technic Porsche 911 race car">
+        <figcaption>LEGO Technic Porsche 911, mid build. Very happy about it.</figcaption>
+      </figure>
+      <figure class="tile t-spidey">
+        <img src="images/build-spiderman.jpg" loading="lazy" alt="A small blocky LEGO Spider-Man figure standing on a notebook full of physics notes">
+        <figcaption>Spider-Man, guarding my physics notes.</figcaption>
+      </figure>
+      <figure class="tile t-walle">
+        <img src="images/build-walle-eve.jpg" loading="lazy" alt="LEGO WALL-E and EVE side by side on a desk">
+        <figcaption>WALL-E and EVE. A love story in space, so of course I built it.</figcaption>
+      </figure>
+      <figure class="tile t-balloon">
+        <img src="images/build-balloon.jpg" loading="lazy" alt="A laser cut wooden hot air balloon model with clouds at its base">
+        <figcaption>Laser cut wood. A lot of tiny pieces.</figcaption>
+      </figure>
+      <figure class="tile t-ship">
+        <img src="images/build-ship.jpg" loading="lazy" alt="A laser cut wooden sailing ship model with curved sails and rigging, on a desk">
+        <figcaption>Wooden sailing ship, rigging and all.</figcaption>
+      </figure>
+    </div>
+    <div class="brickbox">
+      <div class="brick-head">
+        <div>
+          <h3>Your turn</h3>
+          <p>Pick a color and a size, then click to drop a brick. Arrow keys and space work too.</p>
+        </div>
+        <div class="brick-tools">
+          <div class="swatches" id="brickColors" role="group" aria-label="Brick color">
+            <button aria-pressed="true" data-c="#D01012" style="--c:#D01012" aria-label="Red"></button>
+            <button aria-pressed="false" data-c="#0055BF" style="--c:#0055BF" aria-label="Blue"></button>
+            <button aria-pressed="false" data-c="#F2CD37" style="--c:#F2CD37" aria-label="Yellow"></button>
+            <button aria-pressed="false" data-c="#237841" style="--c:#237841" aria-label="Green"></button>
+            <button aria-pressed="false" data-c="#FE8A18" style="--c:#FE8A18" aria-label="Orange"></button>
+            <button aria-pressed="false" data-c="#F4F4F4" style="--c:#F4F4F4" aria-label="White"></button>
+          </div>
+          <div class="sizes" id="brickSizes" role="group" aria-label="Brick size">
+            <button aria-pressed="false" data-w="2">1×2</button>
+            <button aria-pressed="false" data-w="3">1×3</button>
+            <button aria-pressed="true" data-w="4">1×4</button>
+            <button aria-pressed="false" data-w="6">1×6</button>
+          </div>
+          <div class="sizes">
+            <button id="brickUndo">Undo</button>
+            <button id="brickClear">Clear</button>
+          </div>
+        </div>
+      </div>
+      <canvas id="bricks" tabindex="0" aria-label="LEGO stacking toy. Move the pointer to aim and click to drop a brick."></canvas>
     </div>
   </div>
 </section>
@@ -997,44 +1111,136 @@ const launch = { a: 52, v: 22 };
   });
 })();
 
-/* ---------------- FOURIER ---------------- */
-(function fourier(){
-  const cv = $('#fourier'); if (!cv) return;
-  const inp = $('#fTerms');
+/* ---------------- TAYLOR (MATH 171/172) ---------------- */
+(function taylor(){
+  const cv = $('#taylor'); if (!cv) return;
+  const inp = $('#tTerms');
   const st = fitCanvas(cv, () => kick());
-  inp.addEventListener('input', () => { $('#oTerms').textContent = inp.value; kick(); });
-  let th = 0;
-  const kick = whileVisible(cv, (t, dt) => {
+  const fact = n => { let f = 1; for (let i = 2; i <= n; i++) f *= i; return f; };
+  const P = (x, k) => { let s = 0; for (let i = 0; i < k; i++){ const n = 2 * i + 1; s += (i % 2 ? -1 : 1) * Math.pow(x, n) / fact(n); } return s; };
+  let shown = +inp.value, from = shown, to = shown, t0 = -1;
+  const good = k => { let x = 0; while (x < 12 && Math.abs(P(x, k) - Math.sin(x)) < 0.01) x += 0.01; return x; };
+  const upd = () => {
+    to = +inp.value; from = shown; t0 = -1;
+    $('#oTerms').textContent = to;
+    $('#tDeg').textContent = 2 * to - 1;
+    $('#tGood').textContent = '|x| < ' + good(to).toFixed(2);
+    kick();
+  };
+  inp.addEventListener('input', upd);
+  const kick = whileVisible(cv, t => {
     const { ctx, w, h } = st; if (!w) return;
-    th += dt * 1.1;
+    if (t0 < 0) t0 = t;
+    const e = RM ? 1 : clamp((t - t0) / 0.45, 0, 1), ease = 1 - Math.pow(1 - e, 3);
+    shown = to;
     ctx.clearRect(0, 0, w, h);
-    const n = +inp.value, k = Math.min(h * 0.27, w * 0.16);
-    const cx = Math.max(k * 1.5, w * 0.2), cy = h / 2, wx = cx + k * 1.6;
-    // axis
-    ctx.strokeStyle = 'rgba(127,166,224,.18)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(wx, cy); ctx.lineTo(w - 10, cy); ctx.stroke();
-    ctx.setLineDash([3, 5]);
-    [-1, 1].forEach(s => { ctx.beginPath(); ctx.moveTo(wx, cy - s * k); ctx.lineTo(w - 10, cy - s * k); ctx.stroke(); });
-    ctx.setLineDash([]);
-    let x = cx, y = cy;
-    for (let i = 0; i < n; i++){
-      const m = 2 * i + 1, r = k * 4 / (m * Math.PI);
-      ctx.strokeStyle = 'rgba(127,166,224,.38)'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
-      const nx = x + r * Math.cos(m * th), ny = y - r * Math.sin(m * th);
-      ctx.strokeStyle = '#EFE8D8'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(nx, ny); ctx.stroke(); ctx.lineWidth = 1;
-      x = nx; y = ny;
+    const xr = 3.4 * Math.PI, yr = 2.4, pad = 26;
+    const X = x => pad + (x + xr) / (2 * xr) * (w - 2 * pad), Y = y => h / 2 - y / yr * (h / 2 - pad);
+    // grid at multiples of pi
+    ctx.strokeStyle = 'rgba(127,166,224,.12)'; ctx.lineWidth = 1;
+    ctx.font = '11px "Bricolage Grotesque", sans-serif'; ctx.fillStyle = '#A9B4CC';
+    for (let k = -3; k <= 3; k++){ const x = X(k * Math.PI); ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, h - pad); ctx.stroke(); if (k) ctx.fillText((k === 1 ? '' : k === -1 ? '-' : k) + 'π', x + 4, h / 2 + 14); }
+    ctx.strokeStyle = 'rgba(127,166,224,.5)';
+    ctx.beginPath(); ctx.moveTo(pad, h / 2); ctx.lineTo(w - pad, h / 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(X(0), pad); ctx.lineTo(X(0), h - pad); ctx.stroke();
+    // "good" band
+    const gx = good(to);
+    ctx.fillStyle = 'rgba(232,180,74,.08)';
+    ctx.fillRect(X(-gx), pad, X(gx) - X(-gx), h - 2 * pad);
+    // sin
+    ctx.strokeStyle = '#EFE8D8'; ctx.lineWidth = 2; ctx.beginPath();
+    for (let px = pad; px <= w - pad; px++){ const x = (px - pad) / (w - 2 * pad) * 2 * xr - xr; const y = Y(Math.sin(x)); px === pad ? ctx.moveTo(px, y) : ctx.lineTo(px, y); }
+    ctx.stroke();
+    // polynomial, morphing from old to new
+    ctx.save(); ctx.beginPath(); ctx.rect(pad, pad, w - 2 * pad, h - 2 * pad); ctx.clip();
+    ctx.strokeStyle = '#E8B44A'; ctx.lineWidth = 2.6; ctx.beginPath();
+    for (let px = pad; px <= w - pad; px++){
+      const x = (px - pad) / (w - 2 * pad) * 2 * xr - xr;
+      const y = lerp(P(x, from), P(x, to), ease);
+      const yy = Y(clamp(y, -yr * 1.6, yr * 1.6));
+      px === pad ? ctx.moveTo(px, yy) : ctx.lineTo(px, yy);
     }
-    ctx.strokeStyle = 'rgba(232,180,74,.5)'; ctx.setLineDash([4, 4]);
-    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(wx, y); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle = '#E8B44A'; ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#E8B44A'; ctx.lineWidth = 2; ctx.beginPath();
-    for (let px = 0; wx + px < w - 10; px++){
-      const a = th - px * 0.014; let s = 0;
-      for (let i = 0; i < n; i++){ const m = 2 * i + 1; s += 4 / (m * Math.PI) * Math.sin(m * a); }
-      const yy = cy - s * k; px ? ctx.lineTo(wx + px, yy) : ctx.moveTo(wx + px, yy);
-    }
-    ctx.stroke(); ctx.lineWidth = 1;
+    ctx.stroke(); ctx.restore();
+    if (e >= 1) from = to;
+    ctx.fillStyle = '#EFE8D8'; ctx.fillText('sin(x)', w - pad - 44, Y(Math.sin(3.4 * Math.PI - 0.6)) - 10);
+    ctx.fillStyle = '#E8B44A'; ctx.fillText('Taylor polynomial', pad + 6, pad + 12);
   });
+  upd();
+})();
+
+/* ---------------- LEGO STACKER ---------------- */
+(function bricks(){
+  const cv = $('#bricks'); if (!cv) return;
+  const COLS = 28, ROWS = 12;
+  let color = '#D01012', size = 4, ghost = 10, list = [], anim = null;
+  const st = fitCanvas(cv, () => draw());
+  const geo = () => { const u = Math.min(st.w / COLS, st.h / (ROWS * 1.2 + 1.8)); const bh = u * 1.2; return { u, bh, base: st.h - u * 0.9, ox: (st.w - u * COLS) / 2 }; };
+  const heights = () => { const hs = new Array(COLS).fill(0); for (const b of list) for (let c = b.col; c < b.col + b.w; c++) hs[c] = Math.max(hs[c], b.row + 1); return hs; };
+  const landing = (col, w) => { const hs = heights(); let r = 0; for (let c = col; c < col + w; c++) r = Math.max(r, hs[c]); return r; };
+  const shade = (hex, k) => { const n = parseInt(hex.slice(1), 16); const f = v => clamp(Math.round(v * k), 0, 255); return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`; };
+  function brick(ctx, x, y, w, u, bh, col, alpha){
+    ctx.globalAlpha = alpha;
+    for (let i = 0; i < w; i++){ ctx.fillStyle = shade(col, 1.08); ctx.fillRect(x + i * u + u * 0.22, y - u * 0.2, u * 0.56, u * 0.22); }
+    ctx.fillStyle = col; ctx.fillRect(x, y, w * u, bh);
+    ctx.fillStyle = shade(col, 1.2); ctx.fillRect(x, y, w * u, Math.max(1.5, bh * 0.08));
+    ctx.fillStyle = shade(col, 0.7); ctx.fillRect(x, y + bh * 0.9, w * u, bh * 0.1);
+    ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, w * u - 1, bh - 1);
+    ctx.globalAlpha = 1;
+  }
+  function draw(){
+    const { ctx, w, h } = st; if (!w) return;
+    const { u, bh, base, ox } = geo();
+    ctx.clearRect(0, 0, w, h);
+    ctx.save(); ctx.translate(ox, 0);
+    // baseplate
+    ctx.fillStyle = '#237841'; ctx.fillRect(0, base, u * COLS, h - base);
+    for (let c = 0; c < COLS; c++){ ctx.fillStyle = '#2d8f50'; ctx.fillRect(c * u + u * 0.22, base - u * 0.18, u * 0.56, u * 0.2); }
+    const sorted = list.slice().sort((a, b) => a.row - b.row);
+    for (const b of sorted){
+      let y = base - (b.row + 1) * bh;
+      if (anim && anim.b === b) y = lerp(-bh * 2, y, anim.k * anim.k);
+      brick(ctx, b.col * u, y, b.w, u, bh, b.color, 1);
+    }
+    // ghost
+    if (!anim){
+      const col = clamp(ghost, 0, COLS - size), r = landing(col, size);
+      if (r < ROWS){
+        brick(ctx, col * u, base - (r + 1) * bh, size, u, bh, color, 0.35);
+        ctx.strokeStyle = color; ctx.setLineDash([3, 4]); ctx.globalAlpha = .5;
+        ctx.beginPath(); ctx.moveTo((col + size / 2) * u, 8); ctx.lineTo((col + size / 2) * u, base - (r + 1) * bh - u * 0.3); ctx.stroke();
+        ctx.setLineDash([]); ctx.globalAlpha = 1;
+      }
+    }
+    ctx.restore();
+  }
+  function drop(){
+    if (anim) return;
+    const col = clamp(ghost, 0, COLS - size), r = landing(col, size);
+    if (r >= ROWS) return;
+    const b = { col, w: size, row: r, color }; list.push(b);
+    if (RM){ draw(); return; }
+    anim = { b, k: 0 }; const t0 = performance.now();
+    const step = now => { anim.k = clamp((now - t0) / 260, 0, 1); draw(); if (anim.k < 1) requestAnimationFrame(step); else { anim = null; draw(); } };
+    requestAnimationFrame(step);
+  }
+  const colAt = e => { const r = cv.getBoundingClientRect(), g = geo(); return Math.floor((e.clientX - r.left - g.ox) / g.u - size / 2 + 0.5); };
+  cv.addEventListener('pointermove', e => { ghost = colAt(e); draw(); });
+  cv.addEventListener('pointerdown', e => { ghost = colAt(e); drop(); });
+  cv.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft'){ ghost = clamp(ghost - 1, 0, COLS - size); draw(); e.preventDefault(); }
+    else if (e.key === 'ArrowRight'){ ghost = clamp(ghost + 1, 0, COLS - size); draw(); e.preventDefault(); }
+    else if (e.key === ' ' || e.key === 'Enter'){ drop(); e.preventDefault(); }
+  });
+  document.querySelectorAll('#brickColors button').forEach(bt => bt.addEventListener('click', () => {
+    color = bt.dataset.c; document.querySelectorAll('#brickColors button').forEach(x => x.setAttribute('aria-pressed', x === bt)); draw();
+  }));
+  document.querySelectorAll('#brickSizes button').forEach(bt => bt.addEventListener('click', () => {
+    size = +bt.dataset.w; document.querySelectorAll('#brickSizes button').forEach(x => x.setAttribute('aria-pressed', x === bt)); draw();
+  }));
+  $('#brickUndo').addEventListener('click', () => { if (!anim){ list.pop(); draw(); } });
+  $('#brickClear').addEventListener('click', () => { if (!anim){ list = []; draw(); } });
+  // a small starter build so it's not empty
+  [[10,4,0,'#0055BF'],[14,4,0,'#0055BF'],[11,6,1,'#F4F4F4'],[12,4,2,'#D01012'],[13,2,3,'#F2CD37']].forEach(([col,w,row,c]) => list.push({ col, w, row, color: c }));
 })();
 
 /* ---------------- DRONE ---------------- */
