@@ -874,58 +874,77 @@ const MUSIC_TEXT = 'Fast video game soundtracks when I study, musicals like Hami
    ROOM 4 · PLAY: the game shelf and the tabletop
    ========================================================= */
 const GAMES = [
-  { t:"Marvel’s Spider-Man", y:'PS4 · 2018', p:'PS4', n:'My favorite. I’ve 100%’d it eight times. Yes, eight.', c:['#c81d32','#1b2a6b'] },
-  { t:'Celeste', y:'2018', p:'', n:'100%. One of the best games I’ve played, and the hardest to put down.', c:['#e8678f','#3b2a78'] },
-  { t:'Hollow Knight', y:'2017', p:'', n:'100% too. No secret left behind.', c:['#2b3a55','#0b0f1c'] },
-  { t:'Fortnite', y:'2017', p:'', n:'I always try to finish every challenge.', c:['#4a6cf7','#a238ff'] },
-  { t:'Minecraft', y:'2011', p:'', n:'I’ve played it forever. Now I’m making my own shader pack for it, Vivid Visuals (it’s in Projects).', c:['#5aa043','#6b4a2b'] },
-  { t:'Portal', y:'2007', p:'', n:'A favorite puzzle game. Short, clever, and very funny.', c:['#e0e4ea','#ff8a1f'] },
-  { t:'Super Mario Galaxy', y:'Wii · 2007', p:'Wii', n:'The 3D Mario where my 100% habit started. Space, again.', c:['#2a2f8f','#f5c542'] },
-  { t:'Super Mario Odyssey', y:'Switch · 2017', p:'Switch', n:'Another 3D Mario on the 100% streak.', c:['#d6322f','#f0b429'] },
+  { k:'spiderman', ar:507/640, art:'full', t:"Marvel’s Spider-Man", y:'PS4 · 2018', p:'PS4', n:'My favorite. I’ve 100%’d it eight times. Yes, eight.', c:['#c81d32','#1b2a6b'] },
+  { k:'celeste', ar:396/640, art:'pixel', t:'Celeste', y:'Switch · 2018', p:'Switch', n:'100%. One of the best games I’ve played, and the hardest to put down. Every strawberry, including the golden ones.', c:['#c8283c','#1f5f6b'] },
+  { k:'hollowknight', ar:513/640, art:'icon', t:'Hollow Knight', y:'PS4 · 2017', p:'PS4', n:'100% too. No secret left behind.', c:['#3a5a9a','#0b0f1c'] },
+  { k:'fortnite', ar:507/640, art:'icon', t:'Fortnite', y:'PS4 · 2017', p:'PS4', n:'I always try to finish every challenge.', c:['#2a8fe0','#7fdcff'] },
+  { k:'minecraft', ar:501/640, art:'icon', t:'Minecraft', y:'PS4 · 2011', p:'PS4', n:'I’ve played it forever. Now I’m making my own shader pack for it, Vivid Visuals (it’s in Projects).', c:['#5aa043','#6b4a2b'] },
+  { k:'portal', ar:427/640, art:'icon', t:'Portal', y:'PC · 2007', p:'PC', n:'A favorite puzzle game. Short, clever, and very funny.', c:['#1c2a36','#3cb4ff'] },
+  { k:'galaxy2', ar:469/640, art:'logo', t:'Super Mario Galaxy 2', y:'Wii · 2010', p:'Wii', n:'The 3D Mario where my 100% habit started. Space, again.', c:['#2a5fd0','#0b1450'] },
+  { k:'odyssey', ar:427/640, art:'logo', t:'Super Mario Odyssey', y:'Switch · 2017', p:'Switch', n:'Another 3D Mario on the 100% streak.', c:['#d6322f','#1d3f9a'] },
 ];
-// cover art for each case (designed here: title type, colors and a pattern, not the real box art)
-function drawCover(g, G, w, h){
-  const s = g.createLinearGradient(0,0,w*.4,h); s.addColorStop(0,G.c[0]); s.addColorStop(1,G.c[1]); g.fillStyle=s; g.fillRect(0,0,w,h);
-  const seed = G.t.length; g.globalAlpha=.16; g.strokeStyle='#fff'; g.lineWidth=w*.012;
-  for (let i=0;i<10;i++){ g.beginPath(); g.arc(w*((seed*37+i*53)%100)/100, h*((seed*11+i*29)%100)/100, w*(.08+(i%4)*.07), 0, 7); g.stroke(); }
-  g.globalAlpha=1;
-  g.fillStyle='rgba(0,0,0,.55)'; g.fillRect(0,0,w,h*.075); g.fillStyle='#fff'; g.font=`700 ${h*.04}px "Bricolage Grotesque", sans-serif`; g.fillText(G.p ? G.p.toUpperCase() : 'GAME', w*.06, h*.052);
-  g.textAlign='right'; g.fillStyle='#E8B44A'; g.fillText('100%', w*.94, h*.052); g.textAlign='left';
-  g.fillStyle='rgba(0,0,0,.35)'; g.fillRect(0,h*.62,w,h*.38);
-  g.fillStyle='#fff'; g.shadowColor='rgba(0,0,0,.6)'; g.shadowBlur=w*.04; g.font=`600 ${w*.13}px Fraunces, Georgia, serif`;
-  wrap(g, G.t, w*.07, h*.74, w*.86, w*.14); g.shadowBlur=0;
-  g.fillStyle='rgba(255,255,255,.8)'; g.font=`600 ${w*.045}px "JetBrains Mono", monospace`; g.fillText(G.y.toUpperCase(), w*.07, h*.95);
-}
-const coverTex = GAMES.map(G => canvasTex(270, 340, (g,w,h)=>drawCover(g,G,w,h)));
-const coverURL = coverTex.map(t => t.userData.cv.toDataURL('image/jpeg', .85));
+// real box art on the cases, and the game's own art on the TV menu
+const coverImgs = [], artImgs = [];
+const coverURL = GAMES.map(G => `ex/case-${G.k}.jpg`);
+GAMES.forEach((G, i) => {
+  const c = new Image(); c.src = coverURL[i]; coverImgs[i] = c;
+  const a = new Image(); a.src = `ex/tv-${G.k}.webp`; artImgs[i] = a;
+  for (const im of [c, a]) im.onload = () => { if (tvTex) drawTV(); };
+});
 const caseShellMat = new THREE.MeshStandardMaterial({ color:0xffffff, roughness:.08, transparent:true, opacity:.12, depthWrite:false });
 function gameCase(gi){
-  const G = GAMES[gi], g = new THREE.Group(), w = .135, h = .17, d = .015;
-  const spine = canvasTex(40, 340, (c,cw,ch)=>{ const s = c.createLinearGradient(0,0,0,ch); s.addColorStop(0,G.c[0]); s.addColorStop(1,G.c[1]); c.fillStyle=s; c.fillRect(0,0,cw,ch);
-    c.fillStyle='rgba(0,0,0,.5)'; c.fillRect(0,0,cw,26); c.save(); c.translate(cw/2+7, 34); c.rotate(Math.PI/2); c.fillStyle='#fff'; c.font='600 20px Fraunces, Georgia, serif'; c.fillText(G.t, 0, 0); c.restore(); });
-  const plastic = new THREE.MeshStandardMaterial({ color:0x15161a, roughness:.4 });
-  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), [plastic, new THREE.MeshStandardMaterial({ map:spine }), plastic, plastic, new THREE.MeshStandardMaterial({ map:coverTex[gi], roughness:.45 }), plastic]);
+  // PS4 and Wii cases are wide, Switch cases are slimmer; the box keeps each cover's real proportions
+  const G = GAMES[gi], g = new THREE.Group(), h = G.p === 'Switch' ? .158 : .17, w = h*G.ar, d = G.p === 'Switch' ? .011 : .015;
+  const sw = G.p === 'Switch' ? '#d8202a' : G.p === 'Wii' ? '#f2f2f2' : G.p === 'PC' ? '#20262c' : '#1e5bd6';
+  const spine = canvasTex(40, 340, (c,cw,ch)=>{ c.fillStyle = sw; c.fillRect(0,0,cw,ch);
+    const s = c.createLinearGradient(0,0,0,ch); s.addColorStop(0,G.c[0]); s.addColorStop(1,G.c[1]); c.fillStyle=s; c.fillRect(4,30,cw-8,ch-40);
+    c.save(); c.translate(cw/2+7, 40); c.rotate(Math.PI/2); c.fillStyle='#fff'; c.font='600 19px "Bricolage Grotesque", sans-serif'; c.fillText(G.t, 0, 0); c.restore();
+    c.fillStyle = G.p === 'Wii' ? '#333' : '#fff'; c.font='700 13px "Bricolage Grotesque", sans-serif'; c.textAlign='center'; c.fillText(G.p.toUpperCase(), cw/2, 21); });
+  const plastic = new THREE.MeshStandardMaterial({ color: new THREE.Color(sw).multiplyScalar(G.p === 'Wii' ? .85 : .7), roughness:.35 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), [plastic, new THREE.MeshStandardMaterial({ map:spine }), plastic, plastic, new THREE.MeshStandardMaterial({ map:tex(coverURL[gi]), roughness:.4 }), plastic]);
   g.add(body);
   const shell = new THREE.Mesh(new THREE.BoxGeometry(w+.004, h+.004, d+.003), caseShellMat); g.add(shell);
   return { g, body };
 }
 let selGame = 0, tvTex;
-const coverImgs = coverTex.map(t => t.userData.cv);
+// draw an image to fill a box, cropping the overflow (like CSS object-fit: cover)
+function fillImg(g, im, x, y, w, h){ if (!im.complete || !im.naturalWidth) return; const r = Math.max(w/im.naturalWidth, h/im.naturalHeight), sw = w/r, sh = h/r;
+  g.drawImage(im, (im.naturalWidth-sw)/2, (im.naturalHeight-sh)/2, sw, sh, x, y, w, h); }
 function drawTV(){
   const g = tvTex.userData.cv.getContext('2d'), w = 1280, h = 720;
-  const G = GAMES[selGame];
-  const bg = g.createLinearGradient(0,0,w,h); bg.addColorStop(0, G.c[1]); bg.addColorStop(1, '#05070f'); g.fillStyle = bg; g.fillRect(0,0,w,h);
-  g.globalAlpha = .25; g.drawImage(coverImgs[selGame], w*.45, -h*.1, w*.7, w*.7*340/270); g.globalAlpha = 1;
-  const fade = g.createLinearGradient(0,0,w*.75,0); fade.addColorStop(0,'rgba(5,7,15,.95)'); fade.addColorStop(1,'rgba(5,7,15,0)'); g.fillStyle = fade; g.fillRect(0,0,w,h);
+  const G = GAMES[selGame], art = artImgs[selGame], ready = art.complete && art.naturalWidth;
+  const bg = g.createLinearGradient(w,0,0,h); bg.addColorStop(0, G.c[0]); bg.addColorStop(.55, G.c[1]); bg.addColorStop(1, '#05070f'); g.fillStyle = bg; g.fillRect(0,0,w,h);
+  if (ready){
+    if (G.art === 'full'){ // just the hero, below the art's own title (the menu already prints the name)
+      const sy = art.naturalHeight*.315, s = 760/art.naturalWidth;
+      const dh = (art.naturalHeight - sy)*s, tmp = document.createElement('canvas'); tmp.width = 760; tmp.height = Math.ceil(dh); const t = tmp.getContext('2d');
+      t.drawImage(art, 0, sy, art.naturalWidth, art.naturalHeight - sy, 0, 0, 760, dh);
+      const m = t.createLinearGradient(0, 0, 0, 90); m.addColorStop(0, 'rgba(0,0,0,0)'); m.addColorStop(1, 'rgba(0,0,0,1)');
+      t.globalCompositeOperation = 'destination-in'; t.fillStyle = m; t.fillRect(0, 0, 760, dh);
+      const m2 = t.createLinearGradient(0, 0, 160, 0); m2.addColorStop(0, 'rgba(0,0,0,0)'); m2.addColorStop(1, 'rgba(0,0,0,1)'); t.fillStyle = m2; t.fillRect(0, 0, 760, dh);
+      g.drawImage(tmp, w - 760, 200); }
+    else {
+      // a soft glow behind the icon or logo, then the art itself on the right
+      const cx = w*.75, cy = h*.64, glow = g.createRadialGradient(cx, cy, 10, cx, cy, h*.55);
+      glow.addColorStop(0, 'rgba(255,255,255,.28)'); glow.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = glow; g.fillRect(0,0,w,h);
+      const box = G.art === 'logo' ? [w*.42, h*.4] : [h*.5, h*.5], r = Math.min(box[0]/art.naturalWidth, box[1]/art.naturalHeight);
+      const aw = art.naturalWidth*r, ah = art.naturalHeight*r;
+      g.imageSmoothingEnabled = G.art !== 'pixel'; g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 30;
+      g.drawImage(art, cx - aw/2, cy - ah/2, aw, ah); g.shadowBlur = 0; g.imageSmoothingEnabled = true;
+    }
+  }
+  const fade = g.createLinearGradient(0,0,w*.7,0); fade.addColorStop(0,'rgba(5,7,15,.96)'); fade.addColorStop(.6,'rgba(5,7,15,.75)'); fade.addColorStop(1,'rgba(5,7,15,0)'); g.fillStyle = fade; g.fillRect(0,0,w,h);
+  const top = g.createLinearGradient(0,0,0,300); top.addColorStop(0,'rgba(5,7,15,.85)'); top.addColorStop(1,'rgba(5,7,15,0)'); g.fillStyle = top; g.fillRect(0,0,w,300);
   g.fillStyle='#fff'; g.font='600 28px "JetBrains Mono", monospace'; g.fillText('THE GAME SHELF', 60, 64);
   g.textAlign='right'; g.fillText(String(GAMES.length)+' GAMES · ALL 100%', w-60, 64); g.textAlign='left';
-  const tw = 120, th = 151, gap = 16, x0 = 60;
-  GAMES.forEach((q, i) => { const x = x0 + i*(tw+gap), y = i === selGame ? 98 : 112, sw = i === selGame ? tw*1.08 : tw, sh = sw*340/270;
-    g.save(); g.beginPath(); g.roundRect(x, y, sw, sh, 10); g.clip(); g.drawImage(coverImgs[i], x, y, sw, sh); g.restore();
-    if (i === selGame){ g.strokeStyle='#E8B44A'; g.lineWidth=6; g.beginPath(); g.roundRect(x, y, sw, sh, 10); g.stroke(); } });
-  g.fillStyle='#fff'; g.font='600 72px Fraunces, Georgia, serif'; g.fillText(G.t, 60, 400);
+  const tw = 112, th = 140, gap = 22, x0 = 60;
+  GAMES.forEach((q, i) => { const sel = i === selGame, x = x0 + i*(tw+gap) - (sel ? 5 : 0), y = sel ? 92 : 104, sw = sel ? tw*1.09 : tw, sh = sel ? th*1.09 : th;
+    g.fillStyle = '#111'; g.save(); g.beginPath(); g.roundRect(x, y, sw, sh, 10); g.clip(); g.fillRect(x, y, sw, sh); fillImg(g, coverImgs[i], x, y, sw, sh);
+    if (!sel){ g.fillStyle = 'rgba(5,7,15,.35)'; g.fillRect(x, y, sw, sh); } g.restore();
+    if (sel){ g.strokeStyle='#E8B44A'; g.lineWidth=6; g.beginPath(); g.roundRect(x, y, sw, sh, 10); g.stroke(); } });
+  g.fillStyle='#fff'; g.shadowColor='rgba(0,0,0,.6)'; g.shadowBlur=18; g.font=`600 ${G.t.length > 18 ? 58 : 72}px Fraunces, Georgia, serif`; g.fillText(G.t, 60, 400); g.shadowBlur=0;
   g.fillStyle='#ffe2a8'; g.font='600 26px "JetBrains Mono", monospace'; g.fillText(G.y.toUpperCase(), 64, 446);
-  g.fillStyle='#dfe4f2'; g.font='400 32px "Bricolage Grotesque", sans-serif'; wrap(g, G.n, 64, 510, 820, 42);
+  g.fillStyle='#dfe4f2'; g.font='400 32px "Bricolage Grotesque", sans-serif'; wrap(g, G.n, 64, 510, 640, 42);
   g.fillStyle='#E8B44A'; g.beginPath(); g.roundRect(60, h-110, 270, 62, 31); g.fill();
   g.fillStyle='#0D1938'; g.font='600 30px "Bricolage Grotesque", sans-serif'; g.fillText('▶  Click to play', 92, h-68);
   tvTex.needsUpdate = true;
@@ -1435,7 +1454,7 @@ addEventListener('keydown', e => { if (e.key === 'Escape') for (const m of docum
 const gameModal = document.getElementById('gameModal'), gWrap = document.getElementById('games');
 const gTitle = document.getElementById('gTitle'), gNote = document.getElementById('gNote');
 GAMES.forEach((G, i) => { const b = document.createElement('button'); b.className = 'tile';
-  b.style.background = `url(${coverURL[i]}) center/cover`; b.innerHTML = '';
+  b.style.background = `#111 url(${coverURL[i]}) center/cover`; b.innerHTML = '';
   b.setAttribute('aria-label', G.t); b.onclick = () => pickGame(i); gWrap.appendChild(b); });
 function pickGame(i){ selGame = i; drawTV(); [...gWrap.children].forEach((b,k) => b.setAttribute('aria-pressed', k===i ? 'true' : 'false'));
   gTitle.textContent = GAMES[i].t; gNote.textContent = GAMES[i].n; }
