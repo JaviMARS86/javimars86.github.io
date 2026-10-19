@@ -11,86 +11,91 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root{
-  --deep:#0D1938; --navy:#14254D; --gold:#E8B44A; --chalk:#EFE8D8; --mute:#A9B3C9;
-}
+:root{ --deep:#0D1938; --navy:#14254D; --gold:#E8B44A; --chalk:#EFE8D8; --mute:#A9B3C9; }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--deep);color:var(--chalk);overflow:hidden;
   font-family:'Bricolage Grotesque',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
-canvas#c.drag{cursor:grabbing}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:default}
+canvas#c.drag{cursor:grabbing} canvas#c.point{cursor:pointer}
 a{color:inherit}
-.top{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;
-  padding:max(14px,env(safe-area-inset-top)) 18px 14px;pointer-events:none;z-index:3;
-  background:linear-gradient(rgba(13,25,56,.85),rgba(13,25,56,0))}
+.top{position:fixed;top:0;left:0;right:0;display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+  padding:max(12px,env(safe-area-inset-top)) 16px 12px;z-index:3;pointer-events:none;
+  background:linear-gradient(rgba(13,25,56,.9),rgba(13,25,56,0))}
 .top > *{pointer-events:auto}
-.brand{font-family:'Fraunces',serif;font-weight:600;font-size:20px;letter-spacing:.01em}
+.brand{font-family:'Fraunces',serif;font-weight:600;font-size:20px;white-space:nowrap}
 .brand em{font-style:italic;color:var(--gold);font-weight:500}
-.back{font-family:'JetBrains Mono',monospace;font-size:12px;text-decoration:none;color:var(--mute);
+.rooms{display:flex;gap:6px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+.rooms::-webkit-scrollbar{display:none}
+.rooms button{flex:none;font:500 13px 'Bricolage Grotesque',sans-serif;color:var(--mute);background:rgba(20,37,77,.7);
+  border:1px solid rgba(239,232,216,.16);border-radius:999px;padding:7px 12px;cursor:pointer}
+.rooms button:hover{color:var(--chalk);border-color:rgba(232,180,74,.6)}
+.rooms button[aria-current="true"]{color:var(--deep);background:var(--gold);border-color:var(--gold)}
+.rooms button:focus-visible,.back:focus-visible,.x:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.back{font-family:'JetBrains Mono',monospace;font-size:12px;text-decoration:none;color:var(--mute);white-space:nowrap;
   border:1px solid rgba(239,232,216,.2);padding:7px 11px;border-radius:999px}
 .back:hover{color:var(--chalk);border-color:var(--gold)}
-.room{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+#map{position:fixed;right:16px;top:64px;z-index:3;width:150px;height:150px;border-radius:14px;cursor:pointer;
+  background:rgba(13,25,56,.82);border:1px solid rgba(232,180,74,.25)}
 .panel{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);
-  width:min(720px,calc(100% - 32px));z-index:3;display:flex;gap:12px;align-items:center;
-  background:rgba(13,25,56,.86);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  border:1px solid rgba(232,180,74,.28);border-radius:16px;padding:12px 12px 12px 18px}
+  width:min(680px,calc(100% - 32px));z-index:3;display:flex;gap:10px;align-items:flex-start;
+  background:rgba(13,25,56,.88);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(232,180,74,.28);border-radius:16px;padding:13px 14px 14px 18px}
 .info{flex:1;min-width:0}
-.info h2{font-family:'Fraunces',serif;font-weight:600;font-size:19px;line-height:1.2;margin:3px 0 3px}
-.info p{font-size:14.5px;line-height:1.4;color:#D9D3C4}
-.navbtn{flex:none;width:46px;height:46px;border-radius:12px;border:1px solid rgba(239,232,216,.22);
-  background:var(--navy);color:var(--chalk);font-size:20px;cursor:pointer;display:grid;place-items:center}
-.navbtn:hover{border-color:var(--gold);color:var(--gold)}
-.navbtn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-.count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mute);margin-left:8px}
-.hint{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:3;font-size:13px;color:var(--mute);text-align:center;max-width:calc(100% - 32px);
-  background:rgba(13,25,56,.7);padding:7px 12px;border-radius:14px;transition:opacity .8s}
-.hint.hide{opacity:0;pointer-events:none}
+.kick{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.info h2{font-family:'Fraunces',serif;font-weight:600;font-size:19px;line-height:1.2;margin:3px 0}
+.info p{font-size:14.5px;line-height:1.42;color:#D9D3C4}
+.info a.more{display:inline-block;margin-top:6px;font-size:13.5px;color:var(--gold)}
+.info a.more[hidden]{display:none}
+.x{flex:none;width:34px;height:34px;border-radius:10px;border:1px solid rgba(239,232,216,.2);background:var(--navy);
+  color:var(--chalk);font-size:17px;cursor:pointer;display:none}
+.x.on{display:block}
 #load{position:fixed;inset:0;z-index:5;display:grid;place-items:center;background:var(--deep);transition:opacity .7s}
 #load.done{opacity:0;pointer-events:none}
-#load .box{text-align:center;width:min(360px,80vw)}
+#load .box{text-align:center;width:min(380px,84vw)}
 #load h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(30px,6vw,46px)}
 #load h1 em{color:var(--gold);font-weight:500}
-#load p{color:var(--mute);margin:8px 0 22px;font-size:15px}
+#load p{color:var(--mute);margin:8px 0 22px;font-size:15px;line-height:1.45}
 .bar{height:3px;background:rgba(239,232,216,.15);border-radius:3px;overflow:hidden}
 .bar i{display:block;height:100%;width:0;background:var(--gold);transition:width .2s}
 #enter{margin-top:22px;font:600 15px 'Bricolage Grotesque',sans-serif;color:var(--deep);background:var(--gold);
   border:0;border-radius:999px;padding:12px 26px;cursor:pointer;opacity:.35;pointer-events:none;transition:opacity .3s}
 #enter.ready{opacity:1;pointer-events:auto}
-#nogl{display:none;padding:40px 20px;text-align:center}
-@media (max-width:560px){
+#nogl{display:none;margin-top:16px}
+@media (max-width:640px){
+  .brand{font-size:17px} .rooms{order:3;flex-basis:100%} .rooms button{font-size:12.5px;padding:6px 10px}
+  #map{width:104px;height:104px;top:104px;right:12px}
   .info h2{font-size:17px}.info p{font-size:13.5px}
-  .brand{font-size:17px}.hint{font-size:12px;top:58px}
-  .panel{padding:10px 10px 10px 14px;gap:8px}
-  .navbtn{width:42px;height:42px}
+  .panel{padding:11px 10px 12px 14px}
 }
 </style>
 </head>
 <body>
-<canvas id="c" aria-label="A 3D museum of photos you can walk through"></canvas>
+<canvas id="c" aria-label="A 3D museum with a lobby and four rooms. Click the floor to walk, click a piece to look closer."></canvas>
 
 <div class="top">
   <div class="brand">Museo <em>de Javi</em></div>
-  <a class="back" href="../">&larr; back to the site</a>
+  <nav class="rooms" id="rooms" aria-label="Rooms"></nav>
+  <a class="back" href="../">&larr; site</a>
 </div>
-<div class="hint" id="hint">Drag to look around &middot; arrows or the buttons to move between exhibits</div>
+<canvas id="map" width="300" height="300" aria-label="Map of the museum. Click to walk there."></canvas>
 
-<div class="panel" role="region" aria-label="Current exhibit">
-  <button class="navbtn" id="prev" aria-label="Previous exhibit">&larr;</button>
+<div class="panel" role="region" aria-label="What you're looking at">
   <div class="info" aria-live="polite">
-    <div><span class="room" id="room">Entrance</span><span class="count" id="count"></span></div>
+    <div class="kick" id="kick">Lobby</div>
     <h2 id="title">Museo de Javi</h2>
-    <p id="cap">Every photo in here was flattened by a camera. I gave them their depth back.</p>
+    <p id="cap"></p>
+    <a class="more" id="more" href="#" target="_blank" rel="noopener" hidden></a>
   </div>
-  <button class="navbtn" id="next" aria-label="Next exhibit">&rarr;</button>
+  <button class="x" id="close" aria-label="Stop looking at this piece">&times;</button>
 </div>
 
 <div id="load">
   <div class="box">
     <h1>Museo <em>de Javi</em></h1>
-    <p>Photos of my life, with their depth put back in. Apollo has his own stand.</p>
+    <p>Four rooms: me, my work, Apollo and my projects. Click anywhere on the floor to walk there.</p>
     <div class="bar"><i id="barfill"></i></div>
     <button id="enter">Enter the museum</button>
-    <div id="nogl">Your browser can't run WebGL, so the museum won't open here. <a href="../">Back to the site</a>.</div>
+    <p id="nogl">Your browser can't run WebGL, so the museum won't open here. <a href="../">Back to the site</a>.</p>
   </div>
 </div>
 
@@ -98,55 +103,33 @@ a{color:inherit}
 <script type="module">
 import * as THREE from 'three';
 
-/* ---------------- content ---------------- */
-const ROOMS = [
-  { id:'apollo', name:'I · Apollo', title:'Apollo', items:[
-    { k:'adoption-day', a:.75, t:'Day one', c:'The shelf he came from. Out of all the identical dogs there, this one got picked.' },
-    { k:'__tv', t:'Stunt reel', c:'Apollo does his own stunts. Two jumps in Santiago (caught both times) and one rock that did not go to plan.' },
-  ]},
-  { id:'paris', name:'II · Paris', title:'Paris', items:[
-    { k:'paris-eiffel', a:.662, t:'Eiffel Tower', c:'He wanted the whole tower in the shot. He did not get the whole tower in the shot.' },
-    { k:'paris-boat', a:.662, t:'On the Seine', c:'The tower again, from the boat. Once was not enough.' },
-    { k:'paris-view', a:1.509, t:'From the top', c:'Trocadéro below, La Défense on the horizon, Apollo taking it all in.' },
-    { k:'paris-mona', a:.662, t:'The Louvre', c:'Two famous faces in the room. Only one of them in focus.', d:.55 },
-    { k:'paris-apollo-statue', a:.662, t:'Also the Louvre', c:'Meeting someone with similar hair.' },
-  ]},
-  { id:'road', name:'III · On the road', title:'On the road', items:[
-    { k:'madrid-alcala', a:1.509, t:'Madrid', c:'Puerta de Alcalá. Apollo up close, the gate for scale.' },
-    { k:'astorga-palace', a:1.509, t:'Astorga', c:"Gaudí's palace. He looked up the whole time." },
-    { k:'astorga-gate', a:1.509, t:'Astorga, again', c:'Same palace, through the gate. Holding on tight.' },
-    { k:'chocolate', a:.662, t:'Museo del Chocolate', c:'Astorga’s chocolate museum. Apollo got the hug, not the chocolate.' },
-    { k:'covadonga-lion', a:1.509, t:'Asturias', c:'The lion was not impressed.' },
-    { k:'cangas-bridge', a:1.509, t:'Cangas de Onís', c:'The Roman bridge, with Apollo leaning on the railing like he owns it.' },
-    { k:'covadonga-lake', a:1.509, t:'Lago Enol', c:'Lagos de Covadonga. Front row seat; the mountain kept its head in the clouds.' },
-    { k:'irene-lake', a:1.509, t:'Lago Enol, windy', c:'So windy that only Apollo managed to keep his eyes open.' },
-    { k:'andorra', a:1.509, t:'Andorra', c:'At the second longest hanging bridge in the world. He was very brave.' },
-    { k:'santiago', a:1.509, t:'Santiago de Compostela', c:"At the end of the Camino. We didn't walk it. We were just there." },
-    { k:'beach', a:1.509, t:'Beach day', c:'On the turtle towel. Sand everywhere, no regrets.' },
-    { k:'nap', a:1.509, t:'Too much sightseeing', c:'Nap on the pavement. Backpack on standby.' },
-    { k:'vr', a:.562, t:'Trying VR', c:'He says he saw everything.' },
-    { k:'straw-hat', a:1.778, t:'Road trip', c:'Sun hat on, ready for the next stop.' },
-  ]},
-  { id:'me', name:'IV · Me', title:'Me (and the travel buddy)', items:[
-    { k:'javi-covadonga', a:1.509, t:'Lago Enol', c:'Me at the Lagos de Covadonga, with the usual travel buddy.' },
-    { k:'retiro', a:1.509, t:'El Retiro', c:'Madrid. Apollo as a hat.' },
-    { k:'tree', a:1.509, t:'Up a tree', c:'I did not put him there. (I put him there.)' },
-    { k:'basilica-selfie', a:1.509, t:'Covadonga', c:'The basilica, and three of us squeezed into one selfie.' },
-    { k:'bedtime', a:1.778, t:'End of the day', c:'Peace sign, mandatory.' },
-  ]},
-  { id:'sky', name:'V · Sky & workbench', title:'Sky & workbench', items:[
-    { k:'church', a:1.509, t:'Through the lens', c:'Shot through the branches on a grey evening. Nikon D5100.' },
-    { k:'painting', a:.75, t:'Not everything is a photo', c:'Space, painted in about two hours. One of my favorite things I’ve made.' },
-    { k:'lego-galaxy', a:1.333, t:'LEGO Milky Way', c:'There is a tiny “You are here” piece. I checked.' },
-    { k:'lego-porsche', a:.75, t:'Porsche 911', c:'Mid build. Too many pieces, one free afternoon.' },
-    { k:'eclipse', a:1.511, t:'Totality', c:'August 12, 2026, from Rubielos de Mora, Teruel. Nikon D5100.', d:.08, end:true },
-  ]},
-];
-const APOLLO = { t:'Apollo', c:'Plush dog, frequent flyer, our son. This is version 1, rebuilt in 3D from one frame of a video in Santiago. A proper scan comes when he’s back on my desk.' };
-const VEXT = document.createElement('video').canPlayType('video/mp4; codecs="avc1.42E01E"') ? '.mp4' : '.webm';
-const STUNTS = ['vid/stunt-santiago-1','vid/stunt-rock','vid/stunt-santiago-2'].map(v => v + VEXT);
+/* =========================================================
+   PLAN  (metres; north is -z)
+   Lobby in the middle, one room on each side.
+   ========================================================= */
+const H = 6, T = .3, DOOR_W = 3.2, DOOR_H = 3.8, EYE = 1.62;
+const ROOMS = {
+  lobby:    { name:'Lobby',    kick:'Start here', x0:-7,  x1:7,  z0:-7,  z1:7,
+              text:'Four rooms, one topic each. Click anywhere on the floor to walk there, or click a piece to look closer.',
+              entry:[0,3.5], look:[0,1.9,-7] },
+  me:       { name:'Me',       kick:'Room I',     x0:-7,  x1:7,  z0:7,   z1:23, door:[0,7,'x'],
+              text:'What I like, and the things I make with my hands.', entry:[0,9.6], look:[0,2.2,23] },
+  work:     { name:'Work',     kick:'Room II',    x0:-23, x1:-7, z0:-7,  z1:7,  door:[-7,0,'z'],
+              text:'Where I’ve worked, from robot tooling in Michigan to running a media lab in Rochester.', entry:[-9.6,0], look:[-23,2.2,0] },
+  apollo:   { name:'Apollo',   kick:'Room III',   x0:-7,  x1:7,  z0:-23, z1:-7, door:[0,-7,'x'],
+              text:'Plush dog, frequent flyer, our son. Every photo in here has him in it somewhere.', entry:[0,-9.4], look:[0,1.6,-15] },
+  projects: { name:'Projects', kick:'Room IV',    x0:7,   x1:23, z0:-7,  z1:7,  door:[7,0,'z'],
+              text:'Things I’ve built, or am building right now.', entry:[9.6,0], look:[23,2.2,0] },
+};
+const ORDER = ['lobby','me','work','apollo','projects'];
+const OBST = [];   // {x,z,r} things you walk around (pedestals, props)
 
-/* ---------------- setup ---------------- */
+/* aspect ratios of every image (width / height) */
+const A = {"ex/adoption-day":.75,"ex/andorra":1.509,"ex/astorga-gate":1.509,"ex/astorga-palace":1.509,"ex/basilica-selfie":1.509,"ex/beach":1.509,"ex/bedtime":1.778,"ex/build-balloon":.753,"ex/build-porsche":.75,"ex/build-ship":2.162,"ex/build-spiderman":.75,"ex/build-walle-eve":1.778,"ex/cangas-bridge":1.509,"ex/chocolate":.662,"ex/covadonga-lake":1.509,"ex/covadonga-lion":1.509,"ex/irene-lake":1.509,"ex/javi-covadonga":1.509,"ex/madrid-alcala":1.509,"ex/nap":1.509,"ex/paris-apollo-statue":.662,"ex/paris-boat":.662,"ex/paris-eiffel":.662,"ex/paris-mona":.662,"ex/paris-view":1.509,"ex/retiro":1.509,"ex/santiago":1.509,"ex/straw-hat":1.778,"ex/tree":1.509,"ex/vr":.562,"../images/eclipse-3-totality-close":1.51,"../images/eclipse-5-town-lights":1.328,"../images/eclipse-6-diamond-ring":1.51,"../images/church-through-leaves":1.509,"../images/painting-space":.75,"../images/build-galaxy":1.333};
+
+/* =========================================================
+   RENDERER
+   ========================================================= */
 const canvas = document.getElementById('c');
 let renderer;
 try { renderer = new THREE.WebGLRenderer({ canvas, antialias:true }); }
@@ -155,10 +138,8 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0a1430);
-scene.fog = new THREE.Fog(0x0a1430, 18, 46);
-const camera = new THREE.PerspectiveCamera(60, 1, 0.05, 200);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x070e24);
+const camera = new THREE.PerspectiveCamera(62, 1, .05, 120);
 
 const manager = new THREE.LoadingManager();
 const barfill = document.getElementById('barfill');
@@ -166,357 +147,723 @@ manager.onProgress = (u, l, t) => { barfill.style.width = (100*l/t).toFixed(0)+'
 const loader = new THREE.TextureLoader(manager);
 const tex = (url, color=true) => { const t = loader.load(url); if (color) t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; };
 
-/* ---------------- materials & helpers ---------------- */
-function canvasTex(w, h, draw){
-  const cv = document.createElement('canvas'); cv.width=w; cv.height=h;
-  const g = cv.getContext('2d'); draw(g, w, h);
-  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
-}
-function wrapText(g, text, x, y, maxW, lh){
-  const words = text.split(' '); let line=''; let yy=y;
-  for (const w of words){ const test = line ? line+' '+w : w;
-    if (g.measureText(test).width > maxW && line){ g.fillText(line, x, yy); line=w; yy+=lh; } else line=test; }
-  if (line) g.fillText(line, x, yy); return yy;
-}
-const floorTex = canvasTex(512, 512, (g,w,h)=>{
-  g.fillStyle='#3a2716'; g.fillRect(0,0,w,h);
-  for (let r=0;r<8;r++) for (let c=0;c<2;c++){
-    const off = (r%2)*128; const shade = 46+Math.random()*22;
-    g.fillStyle=`rgb(${shade+30},${shade+8},${shade-14})`;
-    g.fillRect(((c*256+off)%512), r*64, 254, 62);
-    g.fillStyle='rgba(0,0,0,.08)';
-    for(let i=0;i<14;i++){ g.fillRect(((c*256+off)%512), r*64+Math.random()*62, 254, 1); }
-  }
-});
-floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping; floorTex.repeat.set(5, 26);
-const wallMat = new THREE.MeshStandardMaterial({ color:0x18295a, roughness:.92 });
-const trimMat = new THREE.MeshStandardMaterial({ color:0xE8B44A, roughness:.35, metalness:.6 });
-const frameMat = new THREE.MeshStandardMaterial({ color:0x1b1410, roughness:.5, metalness:.2 });
-const plinthMat = new THREE.MeshStandardMaterial({ color:0xEFE8D8, roughness:.6 });
-
-/* depth photo: unlit photo texture displaced by its depth map */
-const depthVS = `
-uniform sampler2D dmap; uniform float amt; varying vec2 vUv; varying float vD;
-void main(){ vUv=uv; float d=texture2D(dmap,uv).r;
-  float e = smoothstep(0.0,0.06,uv.x)*smoothstep(1.0,0.94,uv.x)*smoothstep(0.0,0.06,uv.y)*smoothstep(1.0,0.94,uv.y);
-  vD=d; vec3 p=position; p.z += d*amt*e;
-  gl_Position = projectionMatrix*modelViewMatrix*vec4(p,1.0); }`;
-const depthFS = `
-uniform sampler2D map; uniform float glow; varying vec2 vUv; varying float vD;
-void main(){ vec4 c=texture2D(map,vUv); c.rgb *= 0.9 + 0.12*vD + glow;
-  gl_FragColor = linearToOutputTexel(vec4(c.rgb,1.0)); }`;
-function depthPhoto(key, w, h, amt){
-  const map = tex('ex/'+key+'.jpg'); const dmap = tex('ex/'+key+'-d.jpg', false);
-  const segX = 128, segY = Math.max(40, Math.round(128*h/w));
-  const geo = new THREE.PlaneGeometry(w, h, segX, segY);
-  const mat = new THREE.ShaderMaterial({ uniforms:{ map:{value:map}, dmap:{value:dmap}, amt:{value:amt}, glow:{value:0} },
-    vertexShader:depthVS, fragmentShader:depthFS });
-  map.colorSpace = THREE.SRGBColorSpace;
-  return new THREE.Mesh(geo, mat);
-}
-
-function placard(title, text, num){
-  const t = canvasTex(640, 400, (g,w,h)=>{
-    g.fillStyle='#EFE8D8'; g.fillRect(0,0,w,h);
-    g.fillStyle='#E8B44A'; g.fillRect(0,0,10,h);
-    g.fillStyle='#8a6a2a'; g.font='600 22px "JetBrains Mono", monospace'; g.fillText(num, 44, 58);
-    g.fillStyle='#0D1938'; g.font='600 46px Fraunces, Georgia, serif'; const y = wrapText(g, title, 44, 118, w-80, 52);
-    g.fillStyle='#2c3655'; g.font='400 28px "Bricolage Grotesque", system-ui, sans-serif'; wrapText(g, text, 44, y+50, w-80, 36);
-  });
-  return new THREE.Mesh(new THREE.PlaneGeometry(.64,.4), new THREE.MeshStandardMaterial({ map:t, roughness:.8 }));
-}
-function signTex(text, sub){
-  return canvasTex(1024, 256, (g,w,h)=>{
-    g.clearRect(0,0,w,h); g.textAlign='center';
-    g.fillStyle='#E8B44A'; g.font='600 30px "JetBrains Mono", monospace'; g.fillText(sub.toUpperCase(), w/2, 70);
-    g.fillStyle='#EFE8D8'; g.font='600 104px Fraunces, Georgia, serif'; g.fillText(text, w/2, 190);
-  });
-}
-
-/* wait (briefly) for the web fonts so the placards render in them */
 if (document.fonts) await Promise.race([
-  Promise.all(['600 46px Fraunces','400 28px "Bricolage Grotesque"','600 22px "JetBrains Mono"','600 104px Fraunces'].map(f => document.fonts.load(f))),
+  Promise.all(['600 40px Fraunces','400 28px "Bricolage Grotesque"','600 22px "JetBrains Mono"'].map(f => document.fonts.load(f))),
   new Promise(r => setTimeout(r, 2500)) ]).catch(()=>{});
 
-/* ---------------- build the hall ---------------- */
-const HALF = 7, H = 5.2, SPACING = 3.5, EYE = 1.62;
-const stations = [];          // camera stops for the tour
-const clickables = [];        // meshes you can click to jump to a stop
-const lightsList = [];
-let z = 0;                    // rooms run toward -z
-const roomBounds = [];
-
-const hall = new THREE.Group(); scene.add(hall);
-scene.add(new THREE.HemisphereLight(0xc4ceff, 0x3a2a18, 1.0));
-
-function addWall(w, h, x, y, zz, ry){ const m = new THREE.Mesh(new THREE.PlaneGeometry(w,h), wallMat); m.position.set(x,y,zz); m.rotation.y = ry; hall.add(m); return m; }
-
-function divider(zz, label, sub){
-  const side = HALF - 2.1, door = 3.7;
-  const l = new THREE.Mesh(new THREE.BoxGeometry(side, H, .3), wallMat); l.position.set(-(2.1+side/2), H/2, zz); hall.add(l);
-  const r = l.clone(); r.position.x = 2.1+side/2; hall.add(r);
-  const top = new THREE.Mesh(new THREE.BoxGeometry(4.2, H-door, .3), wallMat); top.position.set(0, door+(H-door)/2, zz); hall.add(top);
-  for (const s of [1,-1]){
-    const sign = new THREE.Mesh(new THREE.PlaneGeometry(3.6, .9), new THREE.MeshBasicMaterial({ map:signTex(label, sub), transparent:true }));
-    sign.position.set(0, door+.62, zz + s*.16); if (s<0) sign.rotation.y = Math.PI; hall.add(sign);
-  }
-  const trim = new THREE.Mesh(new THREE.BoxGeometry(4.3, .06, .34), trimMat); trim.position.set(0, door, zz); hall.add(trim);
+/* =========================================================
+   MATERIALS & CANVAS HELPERS
+   ========================================================= */
+function canvasTex(w, h, draw){
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  draw(cv.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
 }
+function wrap(g, text, x, y, maxW, lh){
+  let line = '', yy = y;
+  for (const w of text.split(' ')){ const test = line ? line+' '+w : w;
+    if (g.measureText(test).width > maxW && line){ g.fillText(line, x, yy); line = w; yy += lh; } else line = test; }
+  if (line) g.fillText(line, x, yy); return yy;
+}
+function woodTex(){ const t = canvasTex(512, 512, (g,w,h)=>{
+  g.fillStyle='#3a2716'; g.fillRect(0,0,w,h);
+  for (let r=0;r<8;r++) for (let c=0;c<2;c++){ const off=(r%2)*128, s=46+Math.random()*22;
+    g.fillStyle=`rgb(${s+30},${s+8},${s-14})`; g.fillRect((c*256+off)%512, r*64, 254, 62);
+    g.fillStyle='rgba(0,0,0,.08)'; for(let i=0;i<14;i++) g.fillRect((c*256+off)%512, r*64+Math.random()*62, 254, 1); } });
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; }
+function stoneTex(){ const t = canvasTex(512, 512, (g,w,h)=>{
+  for (let r=0;r<4;r++) for (let c=0;c<4;c++){ const s = 196+Math.random()*16;
+    g.fillStyle=`rgb(${s},${s-6},${s-16})`; g.fillRect(c*128, r*128, 126, 126);
+    for (let i=0;i<40;i++){ g.fillStyle=`rgba(120,110,95,${Math.random()*.08})`; g.beginPath();
+      g.ellipse(c*128+Math.random()*128, r*128+Math.random()*128, Math.random()*30, Math.random()*4, Math.random()*3, 0, 7); g.fill(); } }
+  g.fillStyle='#8f8576'; for (let i=0;i<=4;i++){ g.fillRect(i*128-1,0,2,h); g.fillRect(0,i*128-1,w,2); } });
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; }
 
-function frameAround(mesh, w, h){
+const wallMat  = new THREE.MeshStandardMaterial({ color:0x18295a, roughness:.92 });
+const trimMat  = new THREE.MeshStandardMaterial({ color:0xE8B44A, roughness:.35, metalness:.6 });
+const frameMat = new THREE.MeshStandardMaterial({ color:0x1b1410, roughness:.5, metalness:.2 });
+const plinthMat= new THREE.MeshStandardMaterial({ color:0xEFE8D8, roughness:.6 });
+const darkMat  = new THREE.MeshStandardMaterial({ color:0x15171c, roughness:.55, metalness:.3 });
+
+const world = new THREE.Group(); scene.add(world);
+const floors = [], blockers = [], clickables = [], exhibits = [], updaters = [];
+
+/* =========================================================
+   ARCHITECTURE
+   ========================================================= */
+function box(w, h, d, x, y, z, mat=wallMat){ const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat); m.position.set(x,y,z); world.add(m); return m; }
+// wall along x (z fixed) or along z (x fixed); optional door gap centred at `door`
+function wall(axis, fixed, a, b, door){
+  const segs = door == null ? [[a,b]] : [[a, door-DOOR_W/2], [door+DOOR_W/2, b]];
+  for (const [s,e] of segs){ const len = e-s+T, mid = (s+e)/2;
+    const m = axis==='x' ? box(len, H, T, mid, H/2, fixed) : box(T, H, len, fixed, H/2, mid); blockers.push(m); }
+  if (door != null){
+    const lw = DOOR_W+T, lh = H-DOOR_H, m = axis==='x' ? box(lw, lh, T, door, DOOR_H+lh/2, fixed) : box(T, lh, lw, fixed, DOOR_H+lh/2, door);
+    blockers.push(m);
+    const trim = axis==='x' ? box(DOOR_W+.1, .06, T+.06, door, DOOR_H, fixed, trimMat) : box(T+.06, .06, DOOR_W+.1, fixed, DOOR_H, door, trimMat);
+  }
+}
+function roomShell(key, floorTexFn, repeat){
+  const r = ROOMS[key], w = r.x1-r.x0, d = r.z1-r.z0, cx = (r.x0+r.x1)/2, cz = (r.z0+r.z1)/2;
+  const ft = floorTexFn(); ft.repeat.set(...repeat);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ map:ft, roughness:.7 }));
+  floor.rotation.x = -Math.PI/2; floor.position.set(cx, 0, cz); floor.userData.room = key; world.add(floor); floors.push(floor);
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ color:0x0b1533, roughness:1 }));
+  ceil.rotation.x = Math.PI/2; ceil.position.set(cx, H, cz); world.add(ceil);
+  // a soft skylight panel
+  const sky = new THREE.Mesh(new THREE.PlaneGeometry(w*.55, d*.55), new THREE.MeshBasicMaterial({ color:0x3a4a7a }));
+  sky.rotation.x = Math.PI/2; sky.position.set(cx, H-.01, cz); world.add(sky);
+  // skirting + picture rail on the 4 walls
+  for (const [ax, fx, a, b] of [['x',r.z0,r.x0,r.x1],['x',r.z1,r.x0,r.x1],['z',r.x0,r.z0,r.z1],['z',r.x1,r.z0,r.z1]]){
+    const len = b-a, mid = (a+b)/2, inset = fx === r.z0 || fx === r.x0 ? T/2+.02 : -(T/2+.02);
+    for (const [hh, yy] of [[.14,.07],[.035,4.95]]){
+      if (ax==='x') box(len, hh, .04, mid, yy, fx+inset, trimMat); else box(.04, hh, len, fx+inset, yy, mid, trimMat);
+    }
+  }
+  const L1 = new THREE.PointLight(0xffe4b8, 16, 22, 1.3); L1.position.set(cx, H-.6, cz); world.add(L1);
+}
+roomShell('lobby', stoneTex, [3.5,3.5]);
+for (const k of ['me','work','apollo','projects']) roomShell(k, woodTex, k==='work'||k==='projects' ? [8,7] : [7,8]);
+scene.add(new THREE.HemisphereLight(0xc4ceff, 0x3a2a18, 1.0));
+// lobby walls (each has a door) …
+wall('x', -7, -7, 7, 0);  wall('x', 7, -7, 7, 0);  wall('z', -7, -7, 7, 0);  wall('z', 7, -7, 7, 0);
+// … and the outer walls of each room
+wall('x', -23, -7, 7); wall('z', -7, -23, -7); wall('z', 7, -23, -7);          // apollo
+wall('x', 23, -7, 7);  wall('z', -7, 7, 23);   wall('z', 7, 7, 23);            // me
+wall('z', -23, -7, 7); wall('x', -7, -23, -7); wall('x', 7, -23, -7);          // work
+wall('z', 23, -7, 7);  wall('x', -7, 7, 23);   wall('x', 7, 7, 23);            // projects
+
+/* interior wall frame: origin, tangent (left→right as you face the wall), inward normal */
+function wf(key, side){
+  const r = ROOMS[key], s = T/2;
+  if (side==='N') return { o:new THREE.Vector3(r.x0,0,r.z0+s), t:new THREE.Vector3(1,0,0),  n:new THREE.Vector3(0,0,1),  len:r.x1-r.x0, key };
+  if (side==='S') return { o:new THREE.Vector3(r.x1,0,r.z1-s), t:new THREE.Vector3(-1,0,0), n:new THREE.Vector3(0,0,-1), len:r.x1-r.x0, key };
+  if (side==='E') return { o:new THREE.Vector3(r.x1-s,0,r.z0), t:new THREE.Vector3(0,0,1),  n:new THREE.Vector3(-1,0,0), len:r.z1-r.z0, key };
+  /* W */         return { o:new THREE.Vector3(r.x0+s,0,r.z1), t:new THREE.Vector3(0,0,-1), n:new THREE.Vector3(1,0,0),  len:r.z1-r.z0, key };
+}
+const onWall = (W, t, y, off=0) => W.o.clone().addScaledVector(W.t, t).addScaledVector(W.n, off).setY(y);
+const faceRot = n => Math.atan2(n.x, n.z);
+
+/* =========================================================
+   EXHIBIT PIECES
+   ========================================================= */
+// Depth photo: the photo is pushed out by its depth map, but only when you look at it from the front.
+// From the side it eases back to a flat print, so nothing stretches.
+const depthVS = `
+uniform sampler2D dmap; uniform float amt; varying vec2 vUv;
+void main(){
+  vUv = uv;
+  vec3 n = normalize(mat3(modelMatrix) * vec3(0.,0.,1.));
+  vec3 c = (modelMatrix * vec4(0.,0.,0.,1.)).xyz;
+  float facing = dot(normalize(cameraPosition - c), n);
+  float f = smoothstep(.70, .95, facing);
+  float e = smoothstep(0.,.05,uv.x)*smoothstep(1.,.95,uv.x)*smoothstep(0.,.05,uv.y)*smoothstep(1.,.95,uv.y);
+  vec3 p = position; p.z += texture2D(dmap, uv).r * amt * e * f;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.);
+}`;
+const depthFS = `
+uniform sampler2D map; uniform float glow; varying vec2 vUv;
+void main(){ vec4 c = texture2D(map, vUv); gl_FragColor = linearToOutputTexel(vec4(c.rgb*(1.0+glow), 1.)); }`;
+function photoMesh(src, w, h, depth){
+  const map = tex(src+'.jpg');
+  if (!depth) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.ShaderMaterial({
+      uniforms:{ map:{value:map}, glow:{value:0} }, vertexShader:`varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`, fragmentShader:depthFS })); return m; }
+  const dmap = tex(src+'-d.jpg', false);
+  const sx = 96, sy = Math.max(32, Math.round(96*h/w));
+  return new THREE.Mesh(new THREE.PlaneGeometry(w, h, sx, sy), new THREE.ShaderMaterial({
+    uniforms:{ map:{value:map}, dmap:{value:dmap}, amt:{value:depth*Math.min(w,h)}, glow:{value:0} }, vertexShader:depthVS, fragmentShader:depthFS }));
+}
+function frameAround(inner, w, h){
   const g = new THREE.Group();
   const back = new THREE.Mesh(new THREE.BoxGeometry(w+.22, h+.22, .08), frameMat); back.position.z = -.05; g.add(back);
-  const lip = .03;
-  for (const [sx,sy,px,py] of [[w+.26,lip*2,0,h/2+.12],[w+.26,lip*2,0,-h/2-.12],[lip*2,h+.26,w/2+.12,0],[lip*2,h+.26,-w/2-.12,0]]){
-    const b = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, .1), trimMat); b.position.set(px,py,0); g.add(b);
-  }
-  g.add(mesh); mesh.position.z = .01; return g;
+  for (const [sx,sy,px,py] of [[w+.26,.06,0,h/2+.12],[w+.26,.06,0,-h/2-.12],[.06,h+.26,w/2+.12,0],[.06,h+.26,-w/2-.12,0]]){
+    const b = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, .1), trimMat); b.position.set(px,py,0); g.add(b); }
+  g.add(inner); inner.position.z = .012; return g;
 }
-
-function exhibitSize(a){ return a >= 1 ? [2.7, 2.7/a] : [2.25*a, 2.25]; }
-
-/* fake picture-light: a soft glow painted on the wall (cheaper than real spotlights) */
-const glowTex = canvasTex(256, 256, (g,w,h)=>{ const r = g.createRadialGradient(w/2,h*.15,4,w/2,h*.45,h*.62);
-  r.addColorStop(0,'rgba(255,236,200,.55)'); r.addColorStop(.5,'rgba(255,226,180,.16)'); r.addColorStop(1,'rgba(255,220,170,0)'); g.fillStyle=r; g.fillRect(0,0,w,h); });
+// soft picture light painted ON the wall, behind the frame
+const glowTex = canvasTex(256, 256, (g,w,h)=>{ const r = g.createRadialGradient(w/2,h*.12,4,w/2,h*.45,h*.62);
+  r.addColorStop(0,'rgba(255,236,200,.5)'); r.addColorStop(.5,'rgba(255,226,180,.14)'); r.addColorStop(1,'rgba(255,220,170,0)'); g.fillStyle=r; g.fillRect(0,0,w,h); });
 const glowMat = new THREE.MeshBasicMaterial({ map:glowTex, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending });
-function wallGlow(w, h, x, y, zz, ry){ const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), glowMat); m.position.set(x, y, zz); m.rotation.y = ry; hall.add(m); }
+function wallGlow(W, t, y, w, h){ const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), glowMat);
+  m.position.copy(onWall(W, t, y, .004)); m.rotation.y = faceRot(W.n); world.add(m); }
 
-let num = 0;
-function placeOnWall(item, side, zz, room){
-  num++;
-  const [w,h] = exhibitSize(item.a);
-  const amt = (item.d ?? .42) * Math.min(w,h)/1.8;
-  const photo = depthPhoto(item.k, w, h, amt);
-  const g = frameAround(photo, w, h);
-  const x = side * (HALF - .06), y = 2.05;
-  g.position.set(x, y, zz); g.rotation.y = side > 0 ? -Math.PI/2 : Math.PI/2; hall.add(g);
-  const pl = placard(item.t, item.c, String(num).padStart(2,'0'));
-  pl.position.set(side*(HALF-.04), 1.25, zz + (side>0 ? 1 : -1)*(w/2 + .55)); pl.rotation.y = g.rotation.y; hall.add(pl);
-  wallGlow(w+1.6, h+2.2, side*(HALF-.08), y+.35, zz, g.rotation.y);
-  const st = { pos:new THREE.Vector3(side*(HALF-4.4), EYE, zz), look:new THREE.Vector3(x, y-.4, zz), room, t:item.t, c:item.c, mesh:photo, num };
-  stations.push(st); photo.userData.station = st; clickables.push(photo);
+function placard(title, text, kicker){
+  const t = canvasTex(640, 400, (g,w,h)=>{
+    g.fillStyle='#EFE8D8'; g.fillRect(0,0,w,h); g.fillStyle='#E8B44A'; g.fillRect(0,0,10,h);
+    g.fillStyle='#8a6a2a'; g.font='600 22px "JetBrains Mono", monospace'; g.fillText(kicker||'', 44, 58);
+    g.fillStyle='#0D1938'; g.font='600 44px Fraunces, Georgia, serif'; const y = wrap(g, title, 44, 116, w-80, 50);
+    g.fillStyle='#2c3655'; g.font='400 27px "Bricolage Grotesque", system-ui, sans-serif'; wrap(g, text, 44, y+48, w-80, 35); });
+  return new THREE.Mesh(new THREE.PlaneGeometry(.64,.4), new THREE.MeshBasicMaterial({ map:t, color:0xdcd6c8 }));
+}
+// a reading panel (room intros, jobs, favourites)
+function textPanel(w, h, { kicker='', title='', body='', dark=false }){
+  const S = 360, pw = Math.round(w*S), ph = Math.round(h*S);
+  const t = canvasTex(pw, ph, (g)=>{
+    // shrink the type until everything fits on the panel
+    let k = 1; const pad = .2*S;
+    const lay = (draw) => {
+      const tf = THREE.MathUtils.clamp(.085*w, .2, .3)*S*k, bf = THREE.MathUtils.clamp(.044*w, .11, .15)*S*k, kf = .085*S*Math.min(1,k*1.05);
+      let y = pad + kf;
+      g.font = `600 ${kf}px "JetBrains Mono", monospace`; g.fillStyle = dark ? '#E8B44A' : '#8a6a2a'; if (draw) g.fillText(kicker.toUpperCase(), pad, y);
+      g.font = `600 ${tf}px Fraunces, Georgia, serif`; g.fillStyle = dark ? '#EFE8D8' : '#0D1938';
+      y = draw ? wrap(g, title, pad, y + tf*1.25, pw-2*pad, tf*1.12) : measure(title, y + tf*1.25, tf*1.12);
+      g.font = `400 ${bf}px "Bricolage Grotesque", system-ui, sans-serif`; g.fillStyle = dark ? '#C9CFDE' : '#2c3655';
+      y = draw ? wrap(g, body, pad, y + bf*1.7, pw-2*pad, bf*1.38) : measure(body, y + bf*1.7, bf*1.38);
+      return y; };
+    const measure = (text, y, lh) => { let line = '', yy = y; for (const wd of text.split(' ')){ const tt = line ? line+' '+wd : wd; if (g.measureText(tt).width > pw-2*pad && line){ line = wd; yy += lh; } else line = tt; } return yy; };
+    while (k > .5 && lay(false) > ph - pad*.8) k *= .93;
+    g.fillStyle = dark ? '#0f1d44' : '#EFE8D8'; g.fillRect(0,0,pw,ph);
+    g.fillStyle = '#E8B44A'; g.fillRect(0,0,pw,.035*S);
+    lay(true); });
+  return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map:t, color:0xe2ddd0 }));
+}
+/* register something you can click and look at */
+function addExhibit(obj, { center, normal, w, h, room, kick, title, cap, link, dist, track }){
+  const ex = { obj, center, normal, w, h, room, kick, title, cap, link, dist, track };
+  exhibits.push(ex); clickables.push(obj); obj.traverse(o => { o.userData.ex = ex; }); return ex;
 }
 
-function placeOnEnd(item, zz, room){
-  num++;
-  const w = 4.2, h = w/item.a, amt = (item.d ?? .42)*1.6;
-  const photo = depthPhoto(item.k, w, h, amt);
-  const g = frameAround(photo, w, h); g.position.set(0, 2.35, zz+.08); hall.add(g);
-  const pl = placard(item.t, item.c, String(num).padStart(2,'0')); pl.position.set(w/2+1.1, 1.3, zz+.06); hall.add(pl);
-  wallGlow(w+2, h+2.6, 0, 2.7, zz+.03, 0);
-  const st = { pos:new THREE.Vector3(0, EYE, zz+6.4), look:new THREE.Vector3(0, 1.85, zz), room, t:item.t, c:item.c, mesh:photo, num };
-  stations.push(st); photo.userData.station = st; clickables.push(photo);
+/* hang a photo on a wall */
+function hang(W, t, y, it){
+  const a = A[it.src];
+  let w = it.w, h = it.h; if (w && !h) h = w/a; if (h && !w) w = h*a; if (!w && !h){ w = a >= 1 ? 2.4 : 1.9*a; h = w/a; }
+  const photo = photoMesh(it.src, w, h, it.depth ?? .2);
+  const g = frameAround(photo, w, h); g.position.copy(onWall(W, t, y, .06)); g.rotation.y = faceRot(W.n); world.add(g);
+  wallGlow(W, t, y + h*.18, w + 1.5, h + 1.9);
+  if (it.plac){ const p = placard(it.title, it.cap, it.kick || ''); p.position.copy(onWall(W, t + w/2 + .55, 1.25, .02)); p.rotation.y = faceRot(W.n); world.add(p); }
+  return addExhibit(photo, { center:onWall(W, t, y, .1), normal:W.n.clone(), w, h, room:W.key, kick:it.kick || ROOMS[W.key].name, title:it.title, cap:it.cap, link:it.link });
+}
+function panel(W, t, y, w, h, p){
+  const m = textPanel(w, h, p); m.position.copy(onWall(W, t, y, .03)); m.rotation.y = faceRot(W.n); world.add(m);
+  wallGlow(W, t, y + h*.15, w + 1.2, h + 1.6);
+  return addExhibit(m, { center:onWall(W, t, y, .05), normal:W.n.clone(), w, h, room:W.key, kick:p.kicker, title:p.title, cap:p.body, link:p.link });
+}
+/* lay several photos in a row, evenly spaced between t0 and t1 */
+function row(W, y, t0, t1, items){
+  const ws = items.map(it => { const a = A[it.src]; return it.w ?? (it.h ? it.h*a : (a >= 1 ? 2.4 : 1.9*a)); });
+  const gap = ((t1-t0) - ws.reduce((s,v)=>s+v,0)) / (items.length+1);
+  let t = t0 + gap; items.forEach((it,i) => { hang(W, t + ws[i]/2, y, it); t += ws[i] + gap; });
 }
 
-/* Apollo on a turntable */
+/* reusable pedestal: returns the group sitting on top, ready for a scan (or a stand-in) */
+function pedestal(x, z, { r=.6, h=1.05 } = {}){
+  const g = new THREE.Group(); g.position.set(x, 0, z); world.add(g);
+  const p = new THREE.Mesh(new THREE.CylinderGeometry(r, r*1.08, h, 48), plinthMat); p.position.y = h/2; g.add(p); blockers.push(p);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(r+.01, .02, 8, 64), trimMat); ring.rotation.x = Math.PI/2; ring.position.y = h; g.add(ring);
+  const top = new THREE.Group(); top.position.y = h; g.add(top);
+  const disc = new THREE.Mesh(new THREE.CylinderGeometry(r*.8, r*.8, .04, 48), frameMat); disc.position.y = .02; top.add(disc);
+  const key = new THREE.SpotLight(0xfff0d8, 7, 9, .45, .5, 1.4); key.position.set(x+.8, 4.8, z+1.6);
+  const tg = new THREE.Object3D(); tg.position.set(x, h+.6, z); key.target = tg; world.add(key, tg);
+  OBST.push({ x, z, r:r*1.08 });
+  return top;
+}
+/* stand-in for a scan that's coming: a slow-turning gold wireframe */
+function hologram(top, label){
+  const g = new THREE.Group(); g.position.y = .75; top.add(g);
+  const ico = new THREE.Mesh(new THREE.IcosahedronGeometry(.42, 1), new THREE.MeshBasicMaterial({ color:0xE8B44A, wireframe:true, transparent:true, opacity:.75 }));
+  const core = new THREE.Mesh(new THREE.IcosahedronGeometry(.3, 2), new THREE.MeshBasicMaterial({ color:0x7fa6ff, transparent:true, opacity:.18 }));
+  g.add(ico, core);
+  const lt = canvasTex(512, 128, (c,w,h)=>{ c.textAlign='center'; c.fillStyle='#E8B44A'; c.font='600 34px "JetBrains Mono", monospace'; c.fillText(label.toUpperCase(), w/2, 78); });
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:lt, transparent:true, depthWrite:false })); sp.scale.set(1.6, .4, 1); sp.position.y = .72; g.add(sp);
+  updaters.push((t) => { ico.rotation.y = t*.4; ico.rotation.x = Math.sin(t*.3)*.3; g.position.y = .75 + Math.sin(t*1.2)*.04; });
+  return g;
+}
+
+/* a screen that loops videos (or shows a placeholder until the footage exists) */
+const tvs = [];
+function screen(W, t, y, h, aspect, { sources, poster, placeholder }){
+  const w = h*aspect;
+  const mat = new THREE.MeshBasicMaterial({ toneMapped:false, map: placeholder || tex(poster) });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+  const g = frameAround(m, w, h); g.position.copy(onWall(W, t, y, .06)); g.rotation.y = faceRot(W.n); world.add(g);
+  wallGlow(W, t, y + h*.15, w + 1.6, h + 2);
+  if (sources){
+    const v = document.createElement('video'); Object.assign(v, { muted:true, playsInline:true, preload:'metadata' }); v.setAttribute('playsinline','');
+    const ext = v.canPlayType('video/mp4; codecs="avc1.42E01E"') ? '.mp4' : '.webm';
+    let i = 0; v.src = sources[0] + ext;
+    v.addEventListener('ended', () => { i = (i+1) % sources.length; v.src = sources[i] + ext; v.play().catch(()=>{}); });
+    const vt = new THREE.VideoTexture(v); vt.colorSpace = THREE.SRGBColorSpace;
+    v.addEventListener('playing', () => { if (mat.map !== vt){ mat.map = vt; mat.needsUpdate = true; } });
+    tvs.push({ v, pos:onWall(W, t, y, 0), room:W.key });
+  }
+  return { mesh:m, w, h };
+}
+
+/* =========================================================
+   LOBBY
+   ========================================================= */
+{
+  const N = wf('lobby','N'), S = wf('lobby','S');
+  panel(N, 3.1, 2.3, 3.6, 2.1, { kicker:'Welcome', title:'Museo de Javi', body:'Four rooms, one topic each: me, my work, Apollo and my projects. There’s no set route, so wander.' });
+  panel(N, 10.9, 2.3, 3.6, 2.1, { kicker:'How to visit', title:'Click anywhere', body:'Click the floor to walk there, the way you would in Street View. Click a piece to look closer. Drag to look around. WASD and the arrow keys work too.' });
+  panel(S, 3.1, 2.3, 3.6, 2.1, { kicker:'About the photos', title:'Depth, put back', body:'A camera flattens everything. I ran these photos through a depth model to give them their depth back. Stand in front of one and move a little.' });
+  // floor inlay: a compass pointing at the rooms
+  const inlay = canvasTex(1024, 1024, (g,w,h)=>{
+    g.translate(w/2,h/2); g.strokeStyle='#E8B44A'; g.lineWidth=6; g.beginPath(); g.arc(0,0,440,0,7); g.stroke();
+    g.lineWidth=2; g.beginPath(); g.arc(0,0,400,0,7); g.stroke();
+    g.fillStyle='rgba(232,180,74,.85)';
+    for (let i=0;i<4;i++){ g.save(); g.rotate(i*Math.PI/2); g.beginPath(); g.moveTo(0,-380); g.lineTo(34,-60); g.lineTo(-34,-60); g.closePath(); g.fill(); g.restore(); }
+    g.fillStyle='#0D1938'; g.textAlign='center'; g.font='600 54px Fraunces, Georgia, serif';
+    const lab = [['Apollo',0,-250],['Me',0,290],['Work',-250,18],['Projects',250,18]];
+    for (const [s,x,y] of lab){ g.fillStyle='rgba(239,232,216,.92)'; g.beginPath(); g.roundRect(x-110,y-50,220,72,14); g.fill(); g.fillStyle='#0D1938'; g.fillText(s,x,y); }
+    g.fillStyle='#0D1938'; g.beginPath(); g.arc(0,0,58,0,7); g.fill(); g.fillStyle='#E8B44A'; g.beginPath(); g.arc(0,0,20,0,7); g.fill();
+  });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.MeshStandardMaterial({ map:inlay, transparent:true, roughness:.6, depthWrite:false }));
+  m.rotation.x = -Math.PI/2; m.position.set(0, .005, 0); world.add(m);
+}
+/* door signs: room name on the lobby side, "Lobby" on the room side */
+function signTex(text, sub){ return canvasTex(1024, 256, (g,w,h)=>{ g.textAlign='center';
+  g.fillStyle='#E8B44A'; g.font='600 30px "JetBrains Mono", monospace'; g.fillText(sub.toUpperCase(), w/2, 70);
+  g.fillStyle='#EFE8D8'; g.font='600 100px Fraunces, Georgia, serif'; g.fillText(text, w/2, 188); }); }
+for (const k of ['me','work','apollo','projects']){
+  const [dx, dz, ax] = ROOMS[k].door, r = ROOMS[k];
+  const out = ax==='x' ? new THREE.Vector3(0,0,Math.sign(dz)) : new THREE.Vector3(Math.sign(dx),0,0);   // points into the room
+  for (const [dir, txt, sub] of [[-1, r.name, r.kick], [1, 'Lobby', 'Back to']]){
+    const s = new THREE.Mesh(new THREE.PlaneGeometry(3.4, .85), new THREE.MeshBasicMaterial({ map:signTex(txt, sub), transparent:true }));
+    const n = out.clone().multiplyScalar(dir);   // the way this sign faces
+    s.position.set(dx + n.x*(T/2+.02), DOOR_H+.78, dz + n.z*(T/2+.02));
+    s.rotation.y = faceRot(n); world.add(s);
+  }
+}
+
+/* =========================================================
+   ROOM I · ME
+   ========================================================= */
+{
+  const N = wf('me','N'), S = wf('me','S'), E = wf('me','E'), Wl = wf('me','W');
+  panel(N, 2.9, 2.4, 3.4, 2.1, { kicker:'Room I', title:'Me', body:'I’ve wanted a lot of jobs. Actor, writer, YouTuber, astronaut. The common thread is building whatever I want. So: engineering.' });
+  panel(N, 11.1, 2.4, 3.4, 2.1, { kicker:'Through the lens', title:'Nikon D5100', body:'I shoot on a Nikon D5100. Mostly the sky, landscapes, and one very patient plush dog. Working at a media lab does not help my camera gear wishlist.' });
+  // far wall: photography
+  hang(S, 3.4, 2.5, { src:'../images/church-through-leaves', w:4.0, depth:0, plac:true, kick:'Through the lens', title:'Through the leaves', cap:'Shot through the branches on a grey evening. Nikon D5100.' });
+  hang(S, 9.1, 2.6, { src:'../images/eclipse-3-totality-close', w:3.0, depth:0, plac:true, kick:'August 12, 2026', title:'Totality', cap:'The corona up close. That pink spot on the edge is a solar prominence. Nikon D5100.' });
+  hang(S, 12.4, 3.55, { src:'../images/eclipse-6-diamond-ring', w:1.75, depth:0, kick:'August 12, 2026', title:'Diamond ring', cap:'One bead of sunlight comes back and totality is over. Nikon D5100.' });
+  hang(S, 12.4, 1.65, { src:'../images/eclipse-5-town-lights', w:1.75, depth:0, kick:'August 12, 2026', title:'Town lights', cap:'The streetlights in the town below switched on. In August, before sunset. Pixel phone.' });
+  // west wall: favourites
+  const fav = [
+    ['Favorite thing', 'Space, always', 'It started when I was a kid, and a 7th-grade Technology class made it serious. It’s still the reason I do engineering.'],
+    ['Movies', 'The biggest screen', 'IMAX or Dolby Cinema whenever I can. I went to the La La Land 10th anniversary re-release just to see it in Dolby.'],
+    ['On repeat', 'Music', 'Hamilton, Olivia Rodrigo, Bear Ghost and Lovejoy. Also the Persona soundtracks, even though I’ve never played Persona.'],
+    ['Games', '100%, every time', 'I finish games completely. Marvel’s Spider-Man eight times, Hollow Knight, Celeste, and most 3D Marios since Galaxy.'],
+    ['Tabletop', 'Dice and cards', 'D&D with friends in Valencia, where I play Finnan “Cuentista” Tealeaf, a bard/rogue. Also Magic: The Gathering and chess.'],
+  ];
+  fav.forEach(([k, ti, b], i) => panel(Wl, 1.75 + i*3.1, 2.3, 2.7, 1.9, { kicker:k, title:ti, body:b }));
+  // east wall: things I built by hand
+  row(E, 2.15, .6, 15.4, [
+    { src:'../images/painting-space', h:2.2, depth:0, kick:'Built by hand', title:'Not everything is a photo', cap:'Space, painted in about two hours. One of my favorite things I’ve made.' },
+    { src:'../images/build-galaxy', w:2.4, depth:0, kick:'Built by hand', title:'LEGO Milky Way', cap:'There is a tiny “You are here” piece. I checked.' },
+    { src:'ex/build-porsche', h:2.2, depth:.22, kick:'Built by hand', title:'Porsche 911', cap:'Mid build. Too many pieces, one free afternoon.' },
+    { src:'ex/build-spiderman', h:2.0, depth:.2, kick:'Built by hand', title:'Spider-Man', cap:'Guarding my physics notes.' },
+    { src:'ex/build-walle-eve', w:2.5, depth:.18, kick:'Built by hand', title:'WALL-E and EVE', cap:'A love story in space, so of course I built it.' },
+    { src:'ex/build-balloon', h:2.0, depth:.2, kick:'Built by hand', title:'Wooden balloon', cap:'Not just LEGO. I build in wood too.' },
+  ]);
+}
+
+/* =========================================================
+   ROOM II · WORK
+   ========================================================= */
+{
+  const N = wf('work','N'), S = wf('work','S'), Wl = wf('work','W'), E = wf('work','E');
+  panel(E, 2.85, 2.4, 3.3, 2.0, { kicker:'Room II', title:'Work', body:'Where I’ve worked so far. Robot tooling, a media lab, a classroom, and a lot of kids’ summer camps.' });
+  const job = (W, t, k, ti, b) => panel(W, t, 2.3, 3.4, 2.4, { kicker:k, title:ti, body:b });
+  job(Wl, 2.6, 'Hajim School · Sept 2026 – now', 'Undergraduate TA, ME 102', 'Intro to Aerospace Engineering with Prof. John Lambropoulos. I lead a workshop section, hold office hours, and grade homework with feedback that helps people find their own mistakes.');
+  job(Wl, 7.0, 'Rettner Hall Media Lab · Aug 2026 – now', 'Rettner Lead', 'I co-build the weekly schedule for a team of 11, help hire and train new staff, got the lab ready for the new year, and am the link between the team and our supervisor.');
+  job(Wl, 11.4, 'Rettner Hall Media Lab · 2025 – 2026', 'Digital Media Assistant', 'Help desk and gear loans: cameras, lighting, microphones, and showing people how to use them. I also ran the lab’s 3D printing service, from file prep to pickup.');
+  job(N, 3.2, 'EDSI · Rochester Hills, MI · Summer 2024', 'Prototype Assembly', 'Built prototype robotic tooling for automotive and other clients, about 40 hours a week. I read the mechanical and electrical drawings, planned each assembly, and built it by hand.');
+  job(N, 8.0, 'American Space Valencia · 2023 – 2025', 'Makers Club & stage sound', 'I taught kids to design and build with 3D pens. For the teen drama club I ran sound, set up mics, recorded the shows, and built backdrops.');
+  job(N, 12.8, 'Juniors MD · Valencia · 2022 – 2025', 'Youth group leader', 'Weekly activities for kids, plus three-day and week-long camps with storylines we wrote ourselves.');
+  job(S, 3.0, 'University of Rochester · Sept 2026 – now', 'Rocketry Club', 'The hands-on side of aerospace: structures and propulsion from the ME side, avionics and control from the ECE side.');
+  job(E, 11.2, 'Toolbox', 'What I bring', 'C/C++ (GCC, CMake), 3D printing, prototyping and assembly, reading drawings, hand tools. Cameras, lighting, audio and live sound. English and Spanish.');
+
+  // props on pedestals: a camera and a 3D printer (Rettner), a model rocket (Rocketry Club)
+  const camTop = pedestal(-20, 4.9, { r:.5 });
+  { const g = new THREE.Group(); g.position.y = .2; g.rotation.y = -.5; camTop.add(g);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(.46,.3,.18), darkMat); g.add(body);
+    const hump = new THREE.Mesh(new THREE.BoxGeometry(.18,.1,.14), darkMat); hump.position.set(0,.19,0); g.add(hump);
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(.1,.28,.08), darkMat); grip.position.set(-.2,-.01,.1); g.add(grip);
+    const lens = new THREE.Mesh(new THREE.CylinderGeometry(.11,.12,.26,32), darkMat); lens.rotation.x = Math.PI/2; lens.position.set(.04,0,.21); g.add(lens);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(.115,.012,8,32), trimMat); ring.position.set(.04,0,.29); g.add(ring);
+    const glass = new THREE.Mesh(new THREE.CircleGeometry(.09,32), new THREE.MeshStandardMaterial({ color:0x223a66, roughness:.1, metalness:.8 })); glass.position.set(.04,0,.341); g.add(glass);
+    const btn = new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.02,16), trimMat); btn.position.set(-.18,.16,.02); g.add(btn);
+    addExhibit(g, { center:new THREE.Vector3(-20, 1.3, 4.9), normal:new THREE.Vector3(0,0,-1), w:.8, h:.8, room:'work', dist:2.1,
+      kick:'Rettner Hall Media Lab', title:'The gear', cap:'Cameras, lights and mics went out and came back through my desk every shift. I also taught people how to actually use them.' });
+  }
+  const prTop = pedestal(-16.2, 4.9, { r:.55 });
+  { const g = new THREE.Group(); prTop.add(g); g.rotation.y = .4;
+    const fm = new THREE.MeshStandardMaterial({ color:0x2b2f3a, roughness:.5, metalness:.5 });
+    const base = new THREE.Mesh(new THREE.BoxGeometry(.62,.08,.5), fm); base.position.y = .08; g.add(base);
+    for (const sx of [-.28,.28]){ const p = new THREE.Mesh(new THREE.BoxGeometry(.04,.62,.04), fm); p.position.set(sx,.43,-.18); g.add(p); }
+    const topb = new THREE.Mesh(new THREE.BoxGeometry(.62,.05,.05), fm); topb.position.set(0,.74,-.18); g.add(topb);
+    const bed = new THREE.Mesh(new THREE.BoxGeometry(.4,.02,.36), new THREE.MeshStandardMaterial({ color:0x111111, roughness:.3 })); bed.position.set(0,.16,0); g.add(bed);
+    const printed = new THREE.Mesh(new THREE.CylinderGeometry(.06,.07,.1,6), trimMat); printed.position.set(0,.22,0); g.add(printed);
+    const car = new THREE.Group(); car.position.set(0,.6,-.12); g.add(car);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(.09,.1,.08), new THREE.MeshStandardMaterial({ color:0xE8B44A, roughness:.4 })); car.add(head);
+    const noz = new THREE.Mesh(new THREE.ConeGeometry(.015,.05,12), fm); noz.rotation.x = Math.PI; noz.position.set(0,-.07,.02); car.add(noz);
+    updaters.push(t => { car.position.x = Math.sin(t*1.7)*.16; car.position.z = -.12 + Math.sin(t*1.13)*.06; });
+    addExhibit(g, { center:new THREE.Vector3(-16.2, 1.45, 4.9), normal:new THREE.Vector3(0,0,-1), w:.8, h:.8, room:'work', dist:2.2,
+      kick:'Rettner Hall Media Lab', title:'The 3D printer', cap:'I ran the lab’s 3D printing service: prepping files, running the printer, pricing jobs, and telling people their print was ready.' });
+  }
+  { const g = new THREE.Group(); g.position.set(-12.7, 0, 5.4); world.add(g); OBST.push({ x:-12.7, z:5.4, r:.45 });
+    const stand = new THREE.Mesh(new THREE.CylinderGeometry(.4,.45,.12,32), frameMat); stand.position.y=.06; g.add(stand); blockers.push(stand);
+    const white = new THREE.MeshStandardMaterial({ color:0xf1ece0, roughness:.5 });
+    const tube = new THREE.Mesh(new THREE.CylinderGeometry(.11,.11,1.5,32), white); tube.position.y = .95; g.add(tube);
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(.11,.42,32), white); nose.position.y = 1.91; g.add(nose);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(.113,.113,.08,32), trimMat); band.position.y = 1.45; g.add(band);
+    const finM = new THREE.MeshStandardMaterial({ color:0xc8402e, roughness:.5 });
+    for (let i=0;i<3;i++){ const f = new THREE.Mesh(new THREE.BoxGeometry(.01,.34,.22), finM); const a = i*Math.PI*2/3;
+      f.position.set(Math.sin(a)*.2, .36, Math.cos(a)*.2); f.rotation.y = a; g.add(f); }
+    addExhibit(g, { center:new THREE.Vector3(-12.7, 1.2, 5.4), normal:new THREE.Vector3(0,0,-1), w:.6, h:2.1, room:'work', dist:2.6,
+      kick:'Rocketry Club', title:'A model rocket', cap:'A stand-in for now. When the club flies something I worked on, the real one goes here.' });
+  }
+}
+
+/* =========================================================
+   ROOM III · APOLLO
+   ========================================================= */
 let apolloSpin;
-function buildApollo(zz){
-  const g = new THREE.Group(); g.position.set(0, 0, zz); hall.add(g);
-  const plinth = new THREE.Mesh(new THREE.CylinderGeometry(.75, .82, 1.05, 48), plinthMat); plinth.position.y = .525; g.add(plinth);
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(.76, .02, 8, 64), trimMat); ring.rotation.x = Math.PI/2; ring.position.y = 1.05; g.add(ring);
-  apolloSpin = new THREE.Group(); apolloSpin.position.y = 1.06; g.add(apolloSpin);
-  const disc = new THREE.Mesh(new THREE.CylinderGeometry(.6, .6, .04, 48), frameMat); disc.position.y = .02; apolloSpin.add(disc);
+{
+  const N = wf('apollo','N'), S = wf('apollo','S'), E = wf('apollo','E'), Wl = wf('apollo','W');
+  panel(S, 2.9, 2.4, 3.3, 2.0, { kicker:'Room III', title:'Apollo', body:'Plush dog, frequent flyer, our son. He’s been to Rochester, Benetússer, Paris, Andorra and all over Spain.' });
+  // far wall: the stunt reel between two photos
+  const reel = screen(N, 7, 2.15, 2.6, 9/16, { sources:['vid/stunt-santiago-1','vid/stunt-rock','vid/stunt-santiago-2'], poster:'vid/poster.jpg' });
+  addExhibit(reel.mesh, { center:onWall(N, 7, 2.15, .1), normal:N.n.clone(), w:reel.w, h:reel.h, room:'apollo',
+    kick:'Apollo', title:'Stunt reel', cap:'Apollo does his own stunts. Two jumps in Santiago (caught both times) and one rock that did not go to plan.' });
+  hang(N, 3.2, 2.15, { src:'ex/adoption-day', h:2.4, plac:true, title:'Day one', cap:'The shelf he came from. Out of all the identical dogs there, this one got picked.' });
+  hang(N, 10.9, 2.15, { src:'ex/bedtime', w:2.8, plac:true, title:'End of the day', cap:'Peace sign, mandatory.' });
+  // side walls, hung salon style in two rows
+  const P = (src, title, cap) => ({ src, title, cap, h: A[src] < 1 ? 1.9 : undefined, w: A[src] >= 1 ? 2.05 : undefined });
+  const west = [  // west wall: Paris and the road
+    P('ex/paris-eiffel','Eiffel Tower','He wanted the whole tower in the shot. He did not get the whole tower in the shot.'),
+    P('ex/paris-view','From the top','Trocadéro below, La Défense on the horizon, Apollo taking it all in.'),
+    P('ex/paris-boat','On the Seine','The tower again, from the boat. Once was not enough.'),
+    P('ex/paris-mona','The Louvre','Two famous faces in the room. Only one of them in focus.'),
+    P('ex/paris-apollo-statue','Also the Louvre','Meeting someone with similar hair.'),
+    P('ex/madrid-alcala','Madrid','Puerta de Alcalá. Apollo up close, the gate for scale.'),
+    P('ex/astorga-palace','Astorga',"Gaudí's palace. He looked up the whole time."),
+    P('ex/astorga-gate','Astorga, again','Same palace, through the gate. Holding on tight.'),
+    P('ex/chocolate','Museo del Chocolate','Astorga’s chocolate museum. Apollo got the hug, not the chocolate.'),
+    P('ex/covadonga-lion','Asturias','The lion was not impressed.'),
+    P('ex/cangas-bridge','Cangas de Onís','The Roman bridge, with Apollo leaning on the railing like he owns it.'),
+  ];
+  const east = [  // east wall: the north of Spain and the rest
+    P('ex/covadonga-lake','Lago Enol','Lagos de Covadonga. Front row seat; the mountain kept its head in the clouds.'),
+    P('ex/irene-lake','Lago Enol, windy','So windy that only Apollo managed to keep his eyes open.'),
+    P('ex/javi-covadonga','Lago Enol, with me','Me at the Lagos de Covadonga, with the usual travel buddy.'),
+    P('ex/basilica-selfie','Covadonga','The basilica, and three of us squeezed into one selfie.'),
+    P('ex/andorra','Andorra','At the second longest hanging bridge in the world. He was very brave.'),
+    P('ex/santiago','Santiago de Compostela',"At the end of the Camino. We didn't walk it. We were just there."),
+    P('ex/retiro','El Retiro','Madrid. Apollo as a hat.'),
+    P('ex/tree','Up a tree','I did not put him there. (I put him there.)'),
+    P('ex/beach','Beach day','On the turtle towel. Sand everywhere, no regrets.'),
+    P('ex/nap','Too much sightseeing','Nap on the pavement. Backpack on standby.'),
+    P('ex/vr','Trying VR','He says he saw everything.'),
+    P('ex/straw-hat','Road trip','Sun hat on, ready for the next stop.'),
+  ];
+  const cols = [1.9, 4.35, 6.8, 9.25, 11.7, 14.15];
+  west.forEach((it, i) => hang(Wl, cols[i % 6], i < 6 ? 3.85 : 1.6, it));
+  east.forEach((it, i) => hang(E, cols[i % 6], i < 6 ? 3.85 : 1.6, it));
 
-  const img = new Image(); img.src = 'ex/apollo-h.png';
-  manager.itemStart('apollo-h');
+  // Apollo on his pedestal, version 1 (rebuilt from one video frame)
+  const top = pedestal(0, -15, { r:.75 });
+  apolloSpin = new THREE.Group(); top.add(apolloSpin);
+  const img = new Image(); img.src = 'ex/apollo-h.png'; manager.itemStart('apollo-h');
   img.onload = () => {
-    const W = img.width, Hh = img.height;
-    const cv = document.createElement('canvas'); cv.width=W; cv.height=Hh; const c2 = cv.getContext('2d'); c2.drawImage(img,0,0);
-    const px = c2.getImageData(0,0,W,Hh).data;
+    const W = img.width, Hh = img.height, cv = document.createElement('canvas'); cv.width = W; cv.height = Hh;
+    const c2 = cv.getContext('2d'); c2.drawImage(img,0,0); const px = c2.getImageData(0,0,W,Hh).data;
     const height = 1.15, width = height*W/Hh, depth = .5;
-    function sheet(front){
-      const geo = new THREE.PlaneGeometry(width, height, W-1, Hh-1);
-      const pos = geo.attributes.position;
-      for (let i=0;i<pos.count;i++){
-        const ix = i % W, iy = Math.floor(i / W);
-        const p = (iy*W + ix)*4;
-        const zf = px[p]/255, zb = px[p+1]/255;
-        pos.setZ(i, front ? zf*depth*.5 : -zb*depth*.4);
-        if (!front) pos.setX(i, pos.getX(i));
-      }
+    const sheet = front => { const geo = new THREE.PlaneGeometry(width, height, W-1, Hh-1), pos = geo.attributes.position;
+      for (let i=0;i<pos.count;i++){ const p = i*4; pos.setZ(i, front ? px[p]/255*depth*.5 : -px[p+1]/255*depth*.4); }
       geo.computeVertexNormals();
-      const map = tex(front ? 'ex/apollo.png' : 'ex/apollo-back.png');
-      const mat = new THREE.MeshStandardMaterial({ map, alphaTest:.5, roughness:1, envMapIntensity:0, side: front ? THREE.FrontSide : THREE.BackSide });
-      return new THREE.Mesh(geo, mat);
-    }
-    const fig = new THREE.Group(); fig.add(sheet(true)); fig.add(sheet(false));
-    fig.position.y = height/2 + .02; apolloSpin.add(fig);
-    clickables.push(fig.children[0]); fig.children[0].userData.station = apolloStation;
+      return new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map:tex(front ? 'ex/apollo.png' : 'ex/apollo-back.png'), alphaTest:.5, roughness:1, side: front ? THREE.FrontSide : THREE.BackSide })); };
+    const fig = new THREE.Group(); fig.add(sheet(true), sheet(false)); fig.position.y = height/2 + .02; apolloSpin.add(fig);
+    addExhibit(fig, { center:new THREE.Vector3(0, 1.65, -15), normal:new THREE.Vector3(.3,0,1).normalize(), w:1, h:1.2, room:'apollo', dist:2.4,
+      kick:'Exhibit 00', title:'Apollo', cap:'Version 1, rebuilt in 3D from one frame of a video in Santiago. A proper scan comes when he’s back on my desk.' });
     manager.itemEnd('apollo-h');
   };
   img.onerror = () => manager.itemEnd('apollo-h');
-
-  const key = new THREE.SpotLight(0xfff0d8, 9, 10, .42, .5, 1.4); key.position.set(1.2, 4.6, zz+2.6);
-  const t = new THREE.Object3D(); t.position.set(0, 1.6, zz); key.target = t; hall.add(key); hall.add(t);
-  const rim = new THREE.PointLight(0x7fa6ff, 4, 6, 1.6); rim.position.set(-1.4, 2.6, zz-1.6); hall.add(rim);
-
-  const pl = placard(APOLLO.t, APOLLO.c, 'Exhibit 00'); pl.position.set(0, .62, zz+.86); pl.scale.setScalar(.9); pl.rotation.x = -.35; hall.add(pl);
-}
-const apolloStation = { room:'I · Apollo', t:APOLLO.t, c:APOLLO.c, num:0 };
-
-/* Stunt reel TV */
-let tvVideo, tvIdx = 0;
-function buildTV(side, zz, item, room){
-  num++;
-  tvVideo = document.createElement('video');
-  Object.assign(tvVideo, { muted:true, playsInline:true, crossOrigin:'anonymous', preload:'auto' });
-  tvVideo.setAttribute('playsinline',''); tvVideo.src = STUNTS[0];
-  tvVideo.addEventListener('ended', () => { tvIdx = (tvIdx+1) % STUNTS.length; tvVideo.src = STUNTS[tvIdx]; tvVideo.play().catch(()=>{}); });
-  const vt = new THREE.VideoTexture(tvVideo); vt.colorSpace = THREE.SRGBColorSpace;
-  const h = 2.5, w = h*9/16;
-  const poster = tex('vid/poster.jpg');
-  const smat = new THREE.MeshBasicMaterial({ map:poster, toneMapped:false });
-  tvVideo.addEventListener('playing', () => { if (smat.map !== vt){ smat.map = vt; smat.needsUpdate = true; } });
-  const screen = new THREE.Mesh(new THREE.PlaneGeometry(w, h), smat);
-  const g = frameAround(screen, w, h);
-  g.position.set(side*(HALF-.06), 1.95, zz); g.rotation.y = side>0 ? -Math.PI/2 : Math.PI/2; hall.add(g);
-  wallGlow(w+1.8, h+2.2, side*(HALF-.08), 2.3, zz, g.rotation.y);
-  const pl = placard(item.t, item.c, String(num).padStart(2,'0'));
-  pl.position.set(side*(HALF-.04), 1.25, zz + (side>0?1:-1)*(w/2+.6)); pl.rotation.y = g.rotation.y; hall.add(pl);
-  const st = { pos:new THREE.Vector3(side*(HALF-4.2), EYE, zz), look:new THREE.Vector3(side*HALF, 1.6, zz), room, t:item.t, c:item.c, mesh:screen, num };
-  stations.push(st); screen.userData.station = st; clickables.push(screen);
+  updaters.push((t) => { apolloSpin.rotation.y = .32 + Math.sin(t*.45)*.45; });
 }
 
-/* entrance wall */
+/* =========================================================
+   ROOM IV · PROJECTS
+   ========================================================= */
+let drone;
 {
-  const ent = addWall(HALF*2, H, 0, H/2, 0, 0); ent.rotation.y = 0;
-  const s = new THREE.Mesh(new THREE.PlaneGeometry(6, 1.5), new THREE.MeshBasicMaterial({ map:signTex('Museo de Javi', 'Welcome'), transparent:true }));
-  s.position.set(0, 3.3, -.02); s.rotation.y = Math.PI; hall.add(s);
-}
-stations.push({ pos:new THREE.Vector3(0, EYE, -1.6), look:new THREE.Vector3(0, 1.6, -9), room:'Entrance', t:'Museo de Javi',
-  c:'Every photo in here was flattened by a camera. I gave them their depth back. Move around and watch them pop.', num:null, intro:true });
+  const N = wf('projects','N'), S = wf('projects','S'), E = wf('projects','E'), Wl = wf('projects','W');
+  panel(Wl, 2.85, 2.4, 3.3, 2.0, { kicker:'Room IV', title:'Projects', body:'Things I’ve built, or am building right now. Some of them are still stand-ins until I can film or scan the real thing.' });
 
-for (const [ri, room] of ROOMS.entries()){
-  const start = z;
-  if (room.id === 'apollo'){
-    const len = 14; const az = start - 7;
-    buildApollo(az);
-    stations.push(Object.assign(apolloStation, { pos:new THREE.Vector3(.9, 1.6, az+2.7), look:new THREE.Vector3(0, 1.35, az) }));
-    placeOnWall(room.items[0], -1, az, room.name);
-    buildTV(1, az, room.items[1], room.name);
-    z -= len;
-  } else {
-    const wallItems = room.items.filter(i => !i.end), endItem = room.items.find(i => i.end);
-    const perSide = Math.ceil(wallItems.length/2);
-    const len = perSide*SPACING + 4 + (endItem ? 4 : 0);
-    wallItems.forEach((it, i) => { const side = i%2 ? 1 : -1; const slot = Math.floor(i/2);
-      placeOnWall(it, side, start - 3 - slot*SPACING - (side>0 ? SPACING*.5 : 0), room.name); });
-    z -= len;
-    if (endItem) placeOnEnd(endItem, z, room.name);
+  // Minecraft shader pack: a screen waiting for footage
+  const mc = canvasTex(1280, 720, (g,w,h)=>{
+    const sky = g.createLinearGradient(0,0,0,h); sky.addColorStop(0,'#2b2f6b'); sky.addColorStop(.55,'#d9775a'); sky.addColorStop(.8,'#f3c26b'); g.fillStyle=sky; g.fillRect(0,0,w,h);
+    g.fillStyle='#ffe2a0'; g.fillRect(820,300,90,90);
+    const B = 40; let hgt = 9;
+    for (let x=0;x<w/B;x++){ hgt += Math.round((Math.random()-.5)*1.6); hgt = Math.max(5, Math.min(11, hgt));
+      for (let y=0;y<hgt;y++){ const yy = h - (y+1)*B; const top = y===hgt-1;
+        g.fillStyle = top ? (x%3?'#4f8f3a':'#5aa043') : (y > hgt-4 ? '#7a5534' : '#5c5f66'); g.fillRect(x*B, yy, B-1, B-1); } }
+    g.fillStyle='rgba(13,25,56,.55)'; g.fillRect(0,0,w,170);
+    g.fillStyle='#EFE8D8'; g.font='600 76px Fraunces, Georgia, serif'; g.fillText('Vivid Visuals', 56, 100);
+    g.fillStyle='#E8B44A'; g.font='600 28px "JetBrains Mono", monospace'; g.fillText('SHADER PACK · FOOTAGE COMING SOON', 60, 146); });
+  const scr = screen(E, 7, 2.55, 2.9, 16/9, { placeholder:mc });
+  addExhibit(scr.mesh, { center:onWall(E, 7, 2.55, .1), normal:E.n.clone(), w:scr.w, h:scr.h, room:'projects',
+    kick:'Minecraft', title:'Vivid Visuals', cap:'My Minecraft shader pack, running on Fabric with Sodium and Iris. The goal: the game still feels vanilla, just better. A video of it goes on this screen.' });
+
+  // Fly-Brain drone: flies laps around the room
+  panel(N, 8, 2.4, 3.4, 2.1, { kicker:'Group project · in progress', title:'Fly-Brain drone', body:'A small quadcopter we’re building as a group, now on a custom PCB frame. The one flying around this room is a stand-in for the real one.', link:'https://github.com/akhleif-pixel/fly-brain-drone' });
+  drone = new THREE.Group(); world.add(drone);
+  { const pcb = canvasTex(256, 256, (g,w,h)=>{ g.fillStyle='#1e5a3a'; g.fillRect(0,0,w,h); g.strokeStyle='#d8b25a'; g.lineWidth=3;
+      for (let i=0;i<14;i++){ g.beginPath(); let x = Math.random()*w, y = Math.random()*h; g.moveTo(x,y); for (let k=0;k<3;k++){ Math.random()<.5 ? x += (Math.random()-.5)*120 : y += (Math.random()-.5)*120; g.lineTo(x,y); } g.stroke(); }
+      g.fillStyle='#d8b25a'; for (let i=0;i<30;i++){ g.beginPath(); g.arc(Math.random()*w, Math.random()*h, 4, 0, 7); g.fill(); }
+      g.fillStyle='#111'; g.fillRect(96,96,64,64); });
+    const pm = new THREE.MeshStandardMaterial({ map:pcb, roughness:.5 });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(.26,.025,.26), pm); drone.add(body);
+    for (let i=0;i<2;i++){ const arm = new THREE.Mesh(new THREE.BoxGeometry(.72,.02,.07), pm); arm.rotation.y = Math.PI/4 + i*Math.PI/2; drone.add(arm); }
+    const batt = new THREE.Mesh(new THREE.BoxGeometry(.13,.05,.08), new THREE.MeshStandardMaterial({ color:0x2a3fbf, roughness:.4 })); batt.position.y = .04; drone.add(batt);
+    const propM = new THREE.MeshStandardMaterial({ color:0xdddddd, transparent:true, opacity:.55, roughness:.4, side:THREE.DoubleSide });
+    const props = [];
+    for (let i=0;i<4;i++){ const a = Math.PI/4 + i*Math.PI/2, x = Math.cos(a)*.34, z = Math.sin(a)*.34;
+      const mot = new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.06,20), darkMat); mot.position.set(x,.03,z); drone.add(mot);
+      const p = new THREE.Mesh(new THREE.BoxGeometry(.3,.004,.035), propM); p.position.set(x,.07,z); drone.add(p); props.push(p);
+      const disc = new THREE.Mesh(new THREE.CircleGeometry(.15, 32), new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:.08, depthWrite:false, side:THREE.DoubleSide }));
+      disc.rotation.x = -Math.PI/2; disc.position.set(x,.072,z); drone.add(disc);
+      const led = new THREE.Mesh(new THREE.SphereGeometry(.016, 12, 8), new THREE.MeshBasicMaterial({ color: i < 2 ? 0xff4040 : 0x50a0ff })); led.position.set(x*1.12,-.01,z*1.12); drone.add(led); }
+    drone.scale.setScalar(1.8);
+    const shadow = new THREE.Mesh(new THREE.CircleGeometry(.55, 32), new THREE.MeshBasicMaterial({ map:canvasTex(128,128,(g,w,h)=>{ const r=g.createRadialGradient(64,64,4,64,64,62); r.addColorStop(0,'rgba(0,0,0,.45)'); r.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle=r; g.fillRect(0,0,w,h); }), transparent:true, depthWrite:false }));
+    shadow.rotation.x = -Math.PI/2; world.add(shadow);
+    const prev = new THREE.Vector3(), vel = new THREE.Vector3();
+    updaters.push((t, dt) => {
+      const s = t*.3, cx = 15.5, cz = -1.6;
+      const x = cx + Math.sin(s)*4.2, z = cz + Math.sin(2*s)*2.4, y = 2.3 + Math.sin(t*.9)*.3;
+      prev.copy(drone.position); drone.position.set(x, y, z);
+      if (dt > 0){ vel.subVectors(drone.position, prev).divideScalar(dt); }
+      drone.rotation.y = Math.atan2(-vel.x, -vel.z);
+      drone.rotation.x = THREE.MathUtils.clamp(-vel.length()*.08, -.35, .35);
+      for (const p of props) p.rotation.y += dt*40;
+      shadow.position.set(x, .01, z); shadow.scale.setScalar(.8 + y*.12);
+    });
+    addExhibit(drone, { center:drone.position, normal:new THREE.Vector3(0,0,1), w:1, h:1, room:'projects', track:true,
+      kick:'Group project · in progress', title:'Fly-Brain drone', cap:'A small quadcopter we’re building as a group, now on a custom PCB frame. This one is a stand-in until I can film the real one flying.', link:'https://github.com/akhleif-pixel/fly-brain-drone' });
   }
-  roomBounds.push({ start, end:z });
-  const L = new THREE.PointLight(0xffe2b0, 9, 18, 1.4); L.position.set(0, H-.4, (start+z)/2); hall.add(L);
-  if (ri < ROOMS.length-1) divider(z, ROOMS[ri+1].title, ROOMS[ri+1].name.split(' · ')[0]);
-}
-const LEN = -z;
-{ // shell: floor, ceiling, side walls, end wall
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(HALF*2, LEN), new THREE.MeshStandardMaterial({ map:floorTex, roughness:.7 }));
-  floor.rotation.x = -Math.PI/2; floor.position.set(0, 0, -LEN/2); hall.add(floor);
-  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(HALF*2, LEN), new THREE.MeshStandardMaterial({ color:0x0b1533, roughness:1 }));
-  ceil.rotation.x = Math.PI/2; ceil.position.set(0, H, -LEN/2); hall.add(ceil);
-  addWall(LEN, H, -HALF, H/2, -LEN/2, Math.PI/2);
-  addWall(LEN, H, HALF, H/2, -LEN/2, -Math.PI/2);
-  addWall(HALF*2, H, 0, H/2, -LEN, 0);
-  for (const s of [-1,1]){
-    const base = new THREE.Mesh(new THREE.BoxGeometry(.04, .14, LEN), trimMat); base.position.set(s*(HALF-.02), .07, -LEN/2); hall.add(base);
-    const rail = new THREE.Mesh(new THREE.BoxGeometry(.03, .03, LEN), trimMat); rail.position.set(s*(HALF-.02), 3.85, -LEN/2); hall.add(rail);
-  }
+
+  // the speaker from high school: pedestal waiting for its scan
+  const spTop = pedestal(15, 4.4, { r:.6 });
+  const holo = hologram(spTop, 'Scan coming soon');
+  addExhibit(holo, { center:new THREE.Vector3(15, 1.8, 4.4), normal:new THREE.Vector3(0,0,-1), w:1, h:1.2, room:'projects', dist:2.6,
+    kick:'High school project', title:'The speaker I built', cap:'A speaker I made in high school. It’s somewhere at my house; when I find it, it gets scanned and goes on this pedestal.' });
+  panel(S, 8, 2.4, 3.2, 1.9, { kicker:'High school project', title:'The speaker', body:'I built a speaker in high school. It’s hiding somewhere at home. When I find it, it gets scanned and lives on the pedestal in front of you.' });
 }
 
-/* ---------------- camera, tour & free look ---------------- */
-let idx = 0;
-const camPos = stations[0].pos.clone(), camLook = stations[0].look.clone();
-let yaw = 0, pitch = 0, userYaw = 0, userPitch = 0;   // user drag offsets on top of the station view
-let tween = null;
-const ui = { room:document.getElementById('room'), title:document.getElementById('title'), cap:document.getElementById('cap'), count:document.getElementById('count') };
-const total = stations.filter(s => s.num !== null).length;
-function showInfo(st){
-  ui.room.textContent = st.room; ui.title.textContent = st.t; ui.cap.textContent = st.c;
-  ui.count.textContent = st.num === null ? '' : `${String(st.num).padStart(2,'0')} / ${String(total-1).padStart(2,'0')}`;
+/* =========================================================
+   WALKING
+   ========================================================= */
+function roomOf(x, z){
+  for (const k of ['me','work','apollo','projects','lobby']){ const r = ROOMS[k]; if (x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1) return k; }
+  return null;
 }
-function goTo(i){
-  idx = (i + stations.length) % stations.length; const st = stations[idx];
-  tween = { fromP:camPos.clone(), fromL:camLook.clone(), toP:st.pos.clone(), toL:st.look.clone(), t:0,
-    dur: Math.min(2.6, .9 + camPos.distanceTo(st.pos)*.08) };
-  userYaw *= .3; userPitch *= .3; showInfo(st);
-  for (const s of stations) if (s.mesh && s.mesh.material.uniforms) s.mesh.material.uniforms.glow.value = 0;
+const MARGIN = .55;
+function clampInRoom(p, k){ const r = ROOMS[k];
+  p.x = THREE.MathUtils.clamp(p.x, r.x0+MARGIN, r.x1-MARGIN); p.z = THREE.MathUtils.clamp(p.z, r.z0+MARGIN, r.z1-MARGIN);
+  for (const o of OBST){ const dx = p.x-o.x, dz = p.z-o.z, d = Math.hypot(dx,dz), m = o.r+.45; if (d < m){ const s = (d||1e-3); p.x = o.x + dx/s*m; p.z = o.z + dz/s*m; } }
+  return p; }
+function walkable(x, z){
+  for (const o of OBST) if (Math.hypot(x-o.x, z-o.z) < o.r+.35) return false;
+  for (const k of ORDER){ const r = ROOMS[k]; if (x > r.x0+.4 && x < r.x1-.4 && z > r.z0+.4 && z < r.z1-.4) return true; }
+  for (const k of ['me','work','apollo','projects']){ const [dx,dz,ax] = ROOMS[k].door;
+    if (ax==='x' ? (Math.abs(x-dx) < DOOR_W/2-.4 && Math.abs(z-dz) < .8) : (Math.abs(z-dz) < DOOR_W/2-.4 && Math.abs(x-dx) < .8)) return true; }
+  return false;
 }
-showInfo(stations[0]);
-document.getElementById('next').onclick = () => goTo(idx+1);
-document.getElementById('prev').onclick = () => goTo(idx-1);
-addEventListener('keydown', e => {
-  if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); goTo(idx+1); }
-  if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); goTo(idx-1); }
+function doorPt(k){ const [x,z] = ROOMS[k].door; return new THREE.Vector3(x, EYE, z); }
+function detour(a, b, out){
+  for (const o of OBST){
+    const ab = new THREE.Vector2(b.x-a.x, b.z-a.z), L = ab.length(); if (L < .01) continue; ab.divideScalar(L);
+    const ao = new THREE.Vector2(o.x-a.x, o.z-a.z), s = THREE.MathUtils.clamp(ao.dot(ab), 0, L);
+    const cx = a.x + ab.x*s, cz = a.z + ab.y*s, d = Math.hypot(o.x-cx, o.z-cz), need = o.r + .6;
+    if (d < need && s > .2 && s < L-.2){ let px = cx-o.x, pz = cz-o.z; const pl = Math.hypot(px,pz); if (pl < 1e-3){ px = -ab.y; pz = ab.x; } else { px/=pl; pz/=pl; }
+      out.push(new THREE.Vector3(o.x + px*(need+.3), EYE, o.z + pz*(need+.3))); return; }
+  }
+}
+function route(a, b){
+  const ra = roomOf(a.x, a.z) || 'lobby', rb = roomOf(b.x, b.z) || 'lobby', pts = [a.clone()];
+  const legs = [];
+  if (ra !== rb){ if (ra !== 'lobby') legs.push(doorPt(ra)); if (rb !== 'lobby') legs.push(doorPt(rb)); }
+  legs.push(b.clone());
+  for (const p of legs){ detour(pts[pts.length-1], p, pts); pts.push(p); }
+  return pts;
+}
+
+const cam = { pos:new THREE.Vector3(...[ROOMS.lobby.entry[0], EYE, ROOMS.lobby.entry[1]]), yaw:0, pitch:0 };
+let move = null, focus = null;
+const ease = t => t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+const angTo = (from, to) => { let d = to - from; while (d > Math.PI) d -= 2*Math.PI; while (d < -Math.PI) d += 2*Math.PI; return from + d; };
+function lookAngles(from, at){ const d = new THREE.Vector3().subVectors(at, from); return { yaw:Math.atan2(d.x, -d.z), pitch:Math.atan2(d.y, Math.hypot(d.x, d.z)) }; }
+function walkTo(target, look, onArrive){
+  const pts = route(cam.pos, target);
+  const segL = []; let L = 0; for (let i=1;i<pts.length;i++){ const l = pts[i].distanceTo(pts[i-1]); segL.push(l); L += l; }
+  let toYaw = null, toPitch = null;
+  if (look){ const a = lookAngles(target, look); toYaw = angTo(cam.yaw, a.yaw); toPitch = a.pitch; }
+  move = { pts, segL, L, t:0, dur: Math.min(5, .45 + L/3.6), fromYaw:cam.yaw, fromPitch:cam.pitch, toYaw, toPitch, onArrive };
+}
+function pointAt(s){ let acc = 0; for (let i=0;i<move.segL.length;i++){ if (acc + move.segL[i] >= s || i === move.segL.length-1){ const k = move.segL[i] ? (s-acc)/move.segL[i] : 1; return new THREE.Vector3().lerpVectors(move.pts[i], move.pts[i+1], THREE.MathUtils.clamp(k,0,1)); } acc += move.segL[i]; } return move.pts.at(-1).clone(); }
+
+function standFor(ex){
+  if (ex.track) return new THREE.Vector3(13.2, EYE, 3.0);   // a spot to watch the drone from
+  // stand far enough back that the whole piece fits on this screen (phones are narrow)
+  const vt = Math.tan(THREE.MathUtils.degToRad(camera.fov)/2), ht = vt*camera.aspect;
+  const fit = Math.max((ex.w/2 + .35)/ht, (ex.h/2 + .35)/vt) + .1;
+  const dist = ex.dist ? Math.max(ex.dist, ex.dist*(camera.aspect < .8 ? 1.25 : 1)) : THREE.MathUtils.clamp(fit, 2.0, 6.5);
+  const p = ex.center.clone().addScaledVector(ex.normal, dist); p.y = EYE;
+  return clampInRoom(p, ex.room);
+}
+function visit(ex){
+  setFocus(ex);
+  walkTo(standFor(ex), ex.center);
+}
+function goRoom(k){ const r = ROOMS[k]; setFocus(null); walkTo(clampInRoom(new THREE.Vector3(r.entry[0], EYE, r.entry[1]), k), new THREE.Vector3(...r.look)); }
+
+/* =========================================================
+   UI
+   ========================================================= */
+const ui = { kick:document.getElementById('kick'), title:document.getElementById('title'), cap:document.getElementById('cap'), more:document.getElementById('more'), close:document.getElementById('close') };
+let curRoom = 'lobby';
+function showRoom(k){ const r = ROOMS[k]; ui.kick.textContent = r.kick; ui.title.textContent = r.name === 'Lobby' ? 'Museo de Javi' : r.name; ui.cap.textContent = r.text; ui.more.hidden = true; ui.close.classList.remove('on'); }
+function setFocus(ex){
+  if (focus && focus.obj.material?.uniforms) focus.obj.material.uniforms.glow.value = 0;
+  focus = ex;
+  if (!ex){ showRoom(curRoom); return; }
+  ui.kick.textContent = ex.kick || ''; ui.title.textContent = ex.title || ''; ui.cap.textContent = ex.cap || '';
+  if (ex.link){ ui.more.hidden = false; ui.more.href = ex.link; ui.more.textContent = 'See the repo ↗'; } else ui.more.hidden = true;
+  ui.close.classList.add('on');
+}
+ui.close.onclick = () => setFocus(null);
+const nav = document.getElementById('rooms'); const navBtns = {};
+for (const k of ORDER){ const b = document.createElement('button'); b.textContent = ROOMS[k].name; b.onclick = () => goRoom(k); nav.appendChild(b); navBtns[k] = b; }
+function markRoom(k){ for (const [kk,b] of Object.entries(navBtns)) b.setAttribute('aria-current', kk === k ? 'true' : 'false'); }
+markRoom('lobby'); showRoom('lobby');
+
+/* minimap */
+const map = document.getElementById('map'), mg = map.getContext('2d');
+const MAPB = 24.5, m2c = v => (v + MAPB) / (2*MAPB) * map.width;
+function drawMap(){
+  const W = map.width; mg.clearRect(0,0,W,W);
+  for (const k of ORDER){ const r = ROOMS[k];
+    mg.fillStyle = k === curRoom ? 'rgba(232,180,74,.28)' : 'rgba(239,232,216,.08)';
+    mg.strokeStyle = 'rgba(239,232,216,.35)'; mg.lineWidth = 2;
+    mg.fillRect(m2c(r.x0), m2c(r.z0), m2c(r.x1)-m2c(r.x0), m2c(r.z1)-m2c(r.z0)); mg.strokeRect(m2c(r.x0), m2c(r.z0), m2c(r.x1)-m2c(r.x0), m2c(r.z1)-m2c(r.z0));
+    mg.fillStyle = 'rgba(239,232,216,.75)'; mg.font = '600 22px "Bricolage Grotesque", sans-serif'; mg.textAlign = 'center';
+    if (k !== 'lobby') mg.fillText(ROOMS[k].name, m2c((r.x0+r.x1)/2), m2c((r.z0+r.z1)/2)+8); }
+  const x = m2c(cam.pos.x), y = m2c(cam.pos.z);
+  mg.fillStyle = 'rgba(232,180,74,.35)'; mg.beginPath(); mg.moveTo(x,y);
+  mg.arc(x, y, 40, cam.yaw - Math.PI/2 - .55, cam.yaw - Math.PI/2 + .55); mg.closePath(); mg.fill();
+  mg.fillStyle = '#E8B44A'; mg.beginPath(); mg.arc(x, y, 8, 0, 7); mg.fill(); mg.strokeStyle = '#0D1938'; mg.lineWidth = 3; mg.stroke();
+}
+map.addEventListener('click', e => {
+  const r = map.getBoundingClientRect(), wx = (e.clientX - r.left)/r.width*2*MAPB - MAPB, wz = (e.clientY - r.top)/r.height*2*MAPB - MAPB;
+  const k = roomOf(wx, wz); if (!k) return; setFocus(null); walkTo(clampInRoom(new THREE.Vector3(wx, EYE, wz), k));
 });
 
-// drag to look, tap/click an exhibit to visit it, swipe to change exhibit on touch
-let down = null; const pointerNDC = new THREE.Vector2(); let mouseX = 0, mouseY = 0;
-canvas.addEventListener('pointerdown', e => { down = { x:e.clientX, y:e.clientY, t:performance.now(), yaw:userYaw, pitch:userPitch, moved:false, touch:e.pointerType==='touch' }; canvas.setPointerCapture(e.pointerId); canvas.classList.add('drag'); hideHint(); kickVideo(); });
+/* =========================================================
+   INPUT: drag to look, click floor to walk, click a piece to visit
+   ========================================================= */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+const ring = new THREE.Mesh(new THREE.RingGeometry(.28, .36, 48), new THREE.MeshBasicMaterial({ color:0xEFE8D8, transparent:true, opacity:.85, depthWrite:false }));
+ring.rotation.x = -Math.PI/2; ring.visible = false; world.add(ring);
+const ringDot = new THREE.Mesh(new THREE.CircleGeometry(.07, 24), ring.material); ringDot.rotation.x = -Math.PI/2; world.add(ringDot); ringDot.visible = false;
+let hoverEx = null, mouse = null;
+function pick(cx, cy){
+  ndc.set((cx/innerWidth)*2-1, -(cy/innerHeight)*2+1); ray.setFromCamera(ndc, camera);
+  const hits = ray.intersectObjects([...clickables, ...floors, ...blockers], true);
+  for (const h of hits){
+    if (h.object.userData.ex) return { ex:h.object.userData.ex };
+    if (floors.includes(h.object)) return { floor:h.point, room:h.object.userData.room };
+    return null;   // a wall or a pedestal is in the way
+  }
+  return null;
+}
+let down = null;
+canvas.addEventListener('pointerdown', e => { down = { x:e.clientX, y:e.clientY, yaw:cam.yaw, pitch:cam.pitch, moved:false }; canvas.setPointerCapture(e.pointerId); kickVideo(); });
 canvas.addEventListener('pointermove', e => {
-  mouseX = (e.clientX/innerWidth)*2-1; mouseY = (e.clientY/innerHeight)*2-1;
+  mouse = { x:e.clientX, y:e.clientY };
   if (!down) return; const dx = e.clientX-down.x, dy = e.clientY-down.y;
-  if (Math.abs(dx)+Math.abs(dy) > 6) down.moved = true;
-  userYaw = down.yaw - dx*.0042; userPitch = THREE.MathUtils.clamp(down.pitch - dy*.0035, -.6, .5);
+  if (!down.moved && Math.abs(dx)+Math.abs(dy) > 6){ down.moved = true; canvas.classList.add('drag'); if (move){ move.toYaw = null; move.toPitch = null; } }
+  if (down.moved){ cam.yaw = down.yaw - dx*.0045; cam.pitch = THREE.MathUtils.clamp(down.pitch + dy*.0038, -1.1, 1.1); }
 });
 canvas.addEventListener('pointerup', e => {
-  canvas.classList.remove('drag'); if (!down) return;
-  const dx = e.clientX-down.x, dt = performance.now()-down.t;
-  if (down.touch && Math.abs(dx) > 70 && dt < 450 && Math.abs(e.clientY-down.y) < 60){ userYaw = down.yaw; userPitch = down.pitch; goTo(idx + (dx<0 ? 1 : -1)); }
-  else if (!down.moved){
-    pointerNDC.set((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1);
-    const rc = new THREE.Raycaster(); rc.setFromCamera(pointerNDC, camera);
-    const hit = rc.intersectObjects(clickables, false)[0];
-    if (hit && hit.object.userData.station){ const i = stations.indexOf(hit.object.userData.station); if (i >= 0) goTo(i); }
-  }
+  canvas.classList.remove('drag');
+  if (down && !down.moved){ const p = pick(e.clientX, e.clientY);
+    if (p?.ex) visit(p.ex);
+    else if (p?.floor){ setFocus(null); walkTo(clampInRoom(new THREE.Vector3(p.floor.x, EYE, p.floor.z), p.room)); } }
   down = null;
 });
-const hint = document.getElementById('hint'); let hintHidden = false;
-function hideHint(){ if (!hintHidden){ hintHidden = true; hint.classList.add('hide'); } }
-setTimeout(hideHint, 9000);
-function kickVideo(){ if (tvVideo && tvVideo.paused) tvVideo.play().catch(()=>{}); }
+canvas.addEventListener('pointerleave', () => { mouse = null; });
+const keys = new Set();
+addEventListener('keydown', e => { if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d','W','A','S','D'].includes(e.key)){ keys.add(e.key.toLowerCase()); if (e.key.startsWith('Arrow')) e.preventDefault(); }
+  if (e.key === 'Escape') setFocus(null); });
+addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+addEventListener('blur', () => keys.clear());
+let videoKicked = false;
+function kickVideo(){ if (videoKicked) return; videoKicked = true; for (const t of tvs) t.v.play().then(()=>{ if (curRoom !== t.room) t.v.pause(); }).catch(()=>{ videoKicked = false; }); }
 
-/* ---------------- resize & loop ---------------- */
-function resize(){ const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w/h;
-  camera.fov = w/h < .8 ? 72 : 60; camera.updateProjectionMatrix(); }
+/* =========================================================
+   LOOP
+   ========================================================= */
+function resize(){ renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth/innerHeight;
+  camera.fov = camera.aspect < .8 ? 74 : 62; camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
-
-const clock = new THREE.Clock(); const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const ease = t => t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
-const look = new THREE.Vector3(), sway = new THREE.Vector3(), fwd = new THREE.Vector3(), right = new THREE.Vector3();
+const clock = new THREE.Clock(), fwd = new THREE.Vector3(), side = new THREE.Vector3(), look = new THREE.Vector3();
+let mapTick = 0;
 function frame(){
-  const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime;
-  if (tween){ tween.t += dt/tween.dur; const k = ease(Math.min(1, tween.t));
-    camPos.lerpVectors(tween.fromP, tween.toP, k);
-    // swing wide through the middle of the hall so we never clip a wall
-    camPos.x *= 1 - Math.sin(Math.PI*k)*.55;
-    camLook.lerpVectors(tween.fromL, tween.toL, k);
-    if (tween.t >= 1){ tween = null; } }
-  if (!down){ userYaw *= .985; userPitch *= .985; }
-  // gentle head sway + mouse parallax so the depth shows
-  fwd.subVectors(camLook, camPos).setY(0).normalize(); right.set(-fwd.z, 0, fwd.x);
-  const swayAmt = reduce ? 0 : .32;
-  sway.copy(right).multiplyScalar(Math.sin(t*.5)*swayAmt + (down ? 0 : mouseX*.45));
-  sway.y = Math.sin(t*.37)*swayAmt*.25 - (down ? 0 : mouseY*.18);
-  camera.position.copy(camPos).add(sway);
-  const dir = new THREE.Vector3().subVectors(camLook, camPos);
-  const dist = dir.length(); dir.normalize();
-  const baseYaw = Math.atan2(dir.x, -dir.z), basePitch = Math.asin(dir.y);
-  const yy = baseYaw + userYaw, pp = THREE.MathUtils.clamp(basePitch + userPitch, -1.2, 1.2);
-  look.set(camPos.x + Math.sin(yy)*Math.cos(pp)*dist, camPos.y + Math.sin(pp)*dist, camPos.z - Math.cos(yy)*Math.cos(pp)*dist);
-  camera.lookAt(look);
-  if (apolloSpin) apolloSpin.rotation.y = .32 + (reduce ? 0 : Math.sin(t*.45)*.45);
-  const st = stations[idx]; if (st.mesh && st.mesh.material.uniforms) st.mesh.material.uniforms.glow.value = .06;
+  const raw = clock.getDelta(), dt = Math.min(raw, .05), t = clock.elapsedTime, mdt = Math.min(raw, .5);
+  for (const u of updaters) u(t, dt);
+  // walking along a route
+  if (move){ move.t += mdt/move.dur; const k = ease(Math.min(1, move.t));
+    cam.pos.copy(pointAt(k*move.L));
+    if (move.toYaw !== null){ cam.yaw = move.fromYaw + (move.toYaw - move.fromYaw)*k; cam.pitch = move.fromPitch + (move.toPitch - move.fromPitch)*k; }
+    if (move.t >= 1){ const cb = move.onArrive; move = null; cb && cb(); } }
+  // keyboard walking
+  if (keys.size){ move = null;
+    const sp = 3.2*Math.min(raw,.15), turn = 1.8*Math.min(raw,.15);
+    if (keys.has('arrowleft')) cam.yaw -= turn; if (keys.has('arrowright')) cam.yaw += turn;
+    fwd.set(Math.sin(cam.yaw), 0, -Math.cos(cam.yaw)); side.set(-fwd.z, 0, fwd.x);
+    const d = new THREE.Vector3();
+    if (keys.has('w') || keys.has('arrowup')) d.add(fwd); if (keys.has('s') || keys.has('arrowdown')) d.sub(fwd);
+    if (keys.has('d')) d.add(side); if (keys.has('a')) d.sub(side);
+    if (d.lengthSq()){ d.normalize().multiplyScalar(sp); if (focus) setFocus(null);
+      if (walkable(cam.pos.x + d.x, cam.pos.z + d.z)) { cam.pos.x += d.x; cam.pos.z += d.z; }
+      else if (walkable(cam.pos.x + d.x, cam.pos.z)) cam.pos.x += d.x; else if (walkable(cam.pos.x, cam.pos.z + d.z)) cam.pos.z += d.z; } }
+  // keep looking at the drone while you're watching it
+  if (focus?.track && !down?.moved && !move){ const a = lookAngles(cam.pos, focus.center); cam.yaw = angTo(cam.yaw, cam.yaw + (angTo(cam.yaw, a.yaw) - cam.yaw)*.08); cam.pitch += (a.pitch - cam.pitch)*.08; }
+  // tiny head movement while looking at a photo, so the depth reads
+  const head = new THREE.Vector3();
+  if (focus && !move && !focus.track){ const tg = new THREE.Vector3(focus.normal.z, 0, -focus.normal.x);
+    head.addScaledVector(tg, Math.sin(t*.7)*.06 + (mouse ? (mouse.x/innerWidth-.5)*.22 : 0)); head.y = mouse ? -(mouse.y/innerHeight-.5)*.1 : 0; }
+  camera.position.copy(cam.pos).add(head);
+  look.set(cam.pos.x + Math.sin(cam.yaw)*Math.cos(cam.pitch), cam.pos.y + Math.sin(cam.pitch), cam.pos.z - Math.cos(cam.yaw)*Math.cos(cam.pitch));
+  camera.lookAt(look.add(head));
+  // which room am I in?
+  const rk = roomOf(cam.pos.x, cam.pos.z); if (rk && rk !== curRoom){ curRoom = rk; markRoom(rk); if (!focus) showRoom(rk);
+    for (const tv of tvs){ if (!videoKicked) continue; tv.room === rk ? tv.v.play().catch(()=>{}) : tv.v.pause(); } }
+  // hover: highlight pieces, show the walk ring on the floor
+  if (mouse && !down?.moved){ const p = pick(mouse.x, mouse.y);
+    const ex = p?.ex || null;
+    if (hoverEx !== ex){ if (hoverEx?.obj.material?.uniforms && hoverEx !== focus) hoverEx.obj.material.uniforms.glow.value = 0; hoverEx = ex; }
+    if (ex?.obj.material?.uniforms) ex.obj.material.uniforms.glow.value = .07;
+    canvas.classList.toggle('point', !!ex);
+    if (p?.floor){ const q = clampInRoom(new THREE.Vector3(p.floor.x, 0, p.floor.z), p.room); ring.position.set(q.x, .02, q.z); ringDot.position.set(q.x, .021, q.z); ring.visible = ringDot.visible = true; }
+    else ring.visible = ringDot.visible = false; }
+  else if (!mouse) ring.visible = ringDot.visible = false;
+  ring.scale.setScalar(1 + Math.sin(t*3)*.04);
+  if (++mapTick % 3 === 0) drawMap();
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
 
-/* ---------------- start ---------------- */
+/* =========================================================
+   START
+   ========================================================= */
 const enter = document.getElementById('enter');
 manager.onLoad = () => { barfill.style.width = '100%'; enter.classList.add('ready'); };
-enter.onclick = () => { document.getElementById('load').classList.add('done'); kickVideo(); goTo(1); };
-document.fonts && document.fonts.ready.then(() => {});
+enter.onclick = () => { document.getElementById('load').classList.add('done'); kickVideo(); };
 requestAnimationFrame(frame);
-window.__museum = { stations, goTo, scene, jump(i){ goTo(i); tween.t = 1; camPos.copy(stations[idx].pos); camLook.copy(stations[idx].look); tween = null; } };
+window.__museum = { exhibits, cam, visit, goRoom, teleport(x, z, yaw, pitch=0){ move = null; cam.pos.set(x, EYE, z); cam.yaw = yaw; cam.pitch = pitch; },
+  jumpTo(i){ const ex = exhibits[i]; setFocus(ex); const p = standFor(ex); cam.pos.copy(p); const a = lookAngles(p, ex.center); cam.yaw = a.yaw; cam.pitch = a.pitch; move = null; } };
 </script>
 </body>
 </html>
