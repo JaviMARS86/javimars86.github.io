@@ -189,6 +189,7 @@ const NAV = ['lobby','me','exp','apollo','projects'];
 const OBST = [];   // circles you walk around {x,z,r}
 
 const A = {"ex/adoption-day":.75,"ex/andorra":1.509,"ex/astorga-gate":1.509,"ex/astorga-palace":1.509,"ex/basilica-selfie":1.509,"ex/beach":1.509,"ex/bedtime":1.778,"ex/build-balloon":.753,"ex/build-porsche":.75,"ex/build-ship":2.162,"ex/build-spiderman":.75,"ex/build-walle-eve":1.778,"ex/cangas-bridge":1.509,"ex/chocolate":.662,"ex/covadonga-lake":1.509,"ex/covadonga-lion":1.509,"ex/glasses-american":.562,"ex/glasses-love":.562,"ex/glasses-selfie":.562,"ex/griffith-hollywood":1.328,"ex/griffith":1.328,"ex/guts-selfie":1.333,"ex/guts-stage":1.333,"ex/hamilton-bows":1.328,"ex/hamilton-playbill":.75,"ex/hamilton-poster":.753,"ex/irene-lake":1.509,"ex/javi-covadonga":1.509,"ex/lalaland-dolby":.753,"ex/lego-galaxy":1.667,"ex/madrid-alcala":1.509,"ex/nap":1.509,"ex/paris-apollo-statue":.662,"ex/paris-boat":.662,"ex/paris-eiffel":.662,"ex/paris-mona":.662,"ex/paris-view":1.509,"ex/retiro":1.509,"ex/santiago":1.509,"ex/spidey-booth":.562,"ex/spidey-popcorn":1.333,"ex/straw-hat":1.778,"ex/tree":1.509,"ex/vr":.562,"../images/eclipse-1-partial":.753,"../images/eclipse-2-totality-wide":1.51,"../images/eclipse-3-totality-close":1.51,"../images/eclipse-4-corona-phone":1.328,"../images/eclipse-5-town-lights":1.328,"../images/eclipse-6-diamond-ring":1.51,"../images/eclipse-7-partial-filter":1.51,"../images/church-through-leaves":1.509,"../images/painting-space":.75};
+Object.assign(A, {"ex/ph-morning-glory": 1.509, "ex/ph-butterflies": 1.509, "ex/ph-daisies": 1.509, "ex/ph-roc-del-quer": 1.509, "ex/ph-leon-gaudi": 1.509, "ex/ph-covadonga-cave": 1.509, "ex/ph-covadonga-basilica": 1.509, "ex/ph-covadonga-mist": 1.509, "ex/ph-santiago": 1.509, "ex/ph-fisterra": 1.509, "ex/ph-paris-rider": 1.509, "ex/ph-paris-above": 1.509, "ex/ph-paris-night": 1.509, "ex/ph-dc-mall": 1.509, "ex/ph-dc-jefferson": 1.509, "ex/ph-niagara-boat": 1.509, "ex/ph-niagara-falls": 1.509, "ex/ph-letch-bridge": 1.509, "ex/ph-letch-gorge": 1.509, "ex/ph-letch-bird": 1.509, "ex/ph-letch-trail": 1.509, "ex/ph-letch-rainbow": 1.509, "ex/ph-letch-falls": 1.509, "ex/ph-sueb-sunset": 1.509, "ex/ap-galerie": 1.509, "ex/ap-crown": 1.509, "ex/ap-benjamin": 0.662, "ex/ap-moto": 1.509, "ex/ap-fisterra": 1.509, "ex/ph-scabious": 1.509, "ex/ph-blue-butterfly": 1.509, "ex/ph-night-redhill": 0.75, "ex/ph-night-tree": 0.753, "ex/ph-dusk": 1.509, "ex/ph-night-hill": 0.753, "ex/ph-night-us": 1.329, "ex/ph-night-her": 1.329});
 
 /* =========================================================
    RENDERER
@@ -564,27 +565,98 @@ const ARCH_END = world.children.length;
 }
 { // Photography
   const N = wf('photo','N'), S = wf('photo','S'), Wl = wf('photo','W'), E = wf('photo','E');
-  infoStand('photo', doorOf('me','photo'), 1, { kicker:'Me · Room 1', title:'Photography', body:'I shoot on a Nikon D5100. Mostly the sky, landscapes, and one very patient plush dog.' });
-  hang(N, 7, 2.35, { src:'../images/church-through-leaves', w:4.2, depth:0, plac:true, kick:'Through the lens', title:'Through the leaves', cap:'Shot through the branches on a grey evening. Nikon D5100.' });
-  // west wall: the eclipse, in order
-  const eW = wf('photo','W');
-  const label = new THREE.Mesh(new THREE.PlaneGeometry(6, .75), new THREE.MeshBasicMaterial({ transparent:true, map:canvasTex(1600, 200, (g,w,h)=>{ g.textAlign='center';
-    g.fillStyle='#E8B44A'; g.font='600 34px "JetBrains Mono", monospace'; g.fillText('AUGUST 12, 2026 · RUBIELOS DE MORA, TERUEL', w/2, 56);
-    g.fillStyle='#EFE8D8'; g.font='600 92px Fraunces, Georgia, serif'; g.fillText('The eclipse, in order', w/2, 160); }) }));
-  place(label, eW, 7, 3.55, .03);
+  infoStand('photo', doorOf('me','photo'), 1, { kicker:'Me · Room 1', title:'Photography', body:'Mostly my Nikon D5100, on manual. The sky and the eclipse on the left, close-ups straight ahead, trips on the walls around the doors.' });
+  // a section title painted on the wall: small gold caps, a thin rule, optional place/date line
+  const sec = (W, t, y, title, sub, w = 5) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, .5), new THREE.MeshBasicMaterial({ transparent:true, depthWrite:false, map:canvasTex(Math.round(w*220), 110, (g,cw,ch)=>{
+      g.textAlign='center'; g.fillStyle='#E8B44A'; g.font='600 42px "JetBrains Mono", monospace'; g.fillText(title.split('').join(String.fromCharCode(8202)), cw/2, 46);
+      const tw = Math.min(cw*.8, g.measureText(title).width*1.2 + 60); g.fillRect((cw-tw)/2, 62, tw, 3);
+      if (sub){ g.fillStyle='#C9CFDE'; g.font='26px "Bricolage Grotesque", sans-serif'; g.fillText(sub, cw/2, 98); } }) })); place(m, W, t, y, .02); };
+  const it = (src, title, cap, kick, h) => ({ src:'ex/'+src, title, cap, kick, h, depth:0, light:false });
+
+  /* west wall: the sky. After dark on top, the eclipse in order below */
+  sec(Wl, 7, 5.32, 'AFTER DARK', 'Sunsets from my window and nights away from the city lights', 7);
+  row(Wl, 3.95, .3, 13.7, [
+    it('ph-sueb-sunset', 'From my window', 'Sunset from my room on the 5th floor of Sue B, looking out over the field. Nikon D5100.', 'After dark', 1.25),
+    it('ph-dusk', 'Blue hour', 'The last orange line over the mountains, and the town lights coming on. Nikon D5100.', 'After dark', 1.25),
+    it('ph-night-redhill', 'Stars over a red hill', 'A long exposure on my phone. The earth really is that red.', 'After dark', 1.25),
+    it('ph-night-us', 'Stargazing', 'Lying in the grass under the stars. Apollo came too, obviously.', 'After dark', 1.25),
+    it('ph-night-tree', 'Just stars', 'Point the phone straight up, hold still, wait.', 'After dark', 1.25),
+    it('ph-night-her', 'Same night', 'Same grass, same tree, same sky.', 'After dark', 1.25),
+    it('ph-night-hill', 'Last light', 'The hill goes black and the stars come out over it.', 'After dark', 1.25),
+  ]);
+  pictureLight(Wl, 7, 4.56, 13, 1.3);
+  { const label = new THREE.Mesh(new THREE.PlaneGeometry(9, .5), new THREE.MeshBasicMaterial({ transparent:true, depthWrite:false, map:canvasTex(1980, 110, (g,w,h)=>{ g.textAlign='center';
+      g.fillStyle='#E8B44A'; g.font='600 40px "JetBrains Mono", monospace'; g.fillText('THE ECLIPSE, IN ORDER  ·  AUGUST 12, 2026  ·  RUBIELOS DE MORA, TERUEL', w/2, 52);
+      g.fillStyle='#C9CFDE'; g.font='28px "Bricolage Grotesque", sans-serif'; g.fillText('All of the camera shots were on manual', w/2, 94); }) })); place(label, Wl, 7, 2.98, .03); }
   const ec = [
-    ['eclipse-1-partial','Partial','The Moon takes its first bite. Pixel phone, through eclipse glasses.'],
-    ['eclipse-2-totality-wide','Totality','Right where the planning said it would be, just above the hills. Nikon D5100.'],
-    ['eclipse-3-totality-close','The corona','That pink spot on the edge is a solar prominence. Nikon D5100.'],
-    ['eclipse-4-corona-phone','Same moment, phone','Not bad for a phone. Pixel.'],
-    ['eclipse-5-town-lights','Town lights','The streetlights below switched on. In August, before sunset. Pixel.'],
-    ['eclipse-6-diamond-ring','Diamond ring','One bead of sunlight comes back and totality is over. Nikon D5100.'],
-    ['eclipse-7-partial-filter','Partial again','Through a solar filter. The bite is on the other side now. Nikon D5100.'],
+    ['eclipse-1-partial','Partial','The Moon takes its first bite. Pixel phone, through eclipse glasses.', 1.05],
+    ['eclipse-2-totality-wide','Totality','My favorite photo I’ve ever taken. Totality right where the planning said it would be, almost everything black, and a faint rainbow along the edge. Nikon D5100, on manual.', 1.6],
+    ['eclipse-3-totality-close','The corona','That pink spot on the edge is a solar prominence. Nikon D5100.', 1.05],
+    ['eclipse-4-corona-phone','Same moment, phone','Not bad for a phone. Pixel.', 1.05],
+    ['eclipse-5-town-lights','Town lights','The streetlights below switched on. In August, before sunset. Pixel.', 1.05],
+    ['eclipse-6-diamond-ring','Diamond ring','One bead of sunlight comes back and totality is over. Nikon D5100.', 1.05],
+    ['eclipse-7-partial-filter','Partial again','Through a solar filter. The bite is on the other side now. Nikon D5100.', 1.05],
   ];
-  row(eW, 2.1, .3, 13.7, ec.map(([s,t,c]) => ({ src:'../images/'+s, h:1.12, depth:0, kick:'The eclipse', title:t, cap:c })));
-  panel(S, 3.4, 2.3, 3.2, 2.0, { kicker:'Coming soon', title:'More photos', body:'This wall is saving space for the next batch of photos. More of the sky, more landscapes, more Apollo.' });
-  panel(E, 2.9, 2.3, 2.9, 1.9, { kicker:'The camera', title:'Nikon D5100', body:'My camera for the sky and landscapes. Working at a media lab does not help my camera gear wishlist.' });
-  panel(E, 11.1, 2.3, 2.9, 1.9, { kicker:'The other camera', title:'Whatever’s in my pocket', body:'Some of my favorite shots are from my phone, because it was the one I had on me.' });
+  row(Wl, 1.75, .3, 13.7, ec.map(([s,t,c,h]) => ({ src:'../images/'+s, h, depth:0, light:false, kick:'The eclipse', title:t, cap:c })));
+  pictureLight(Wl, 7, 2.6, 13, 1.6);
+
+  /* north wall (straight ahead): through the leaves, with close-ups either side */
+  hang(N, 7, 2.6, { src:'../images/church-through-leaves', w:4.2, depth:0, plac:true, kick:'Through the lens', title:'Through the leaves',
+    cap:'My first day shooting on manual instead of automatic, through the branches on a grey evening. Still one of my favorite shots. Nikon D5100.' });
+  sec(N, 2.4, 4.85, 'UP CLOSE', '', 3); sec(N, 11.6, 4.85, 'UP CLOSE', '', 3);
+  const up = [
+    [2.4, 3.5, it('ph-morning-glory', 'Morning glories', 'Two of them open at once, first thing in the morning. Asturias, July 2025.', 'Up close')],
+    [2.4, 1.72, it('ph-scabious', 'Pincushion', 'One wildflower in focus, a whole field of grass melting away behind it.', 'Up close')],
+    [11.6, 3.5, it('ph-butterflies', 'Two butterflies', 'One flower each, on the path to the Mirador Roc del Quer in Andorra.', 'Up close')],
+    [11.6, 1.72, it('ph-blue-butterfly', 'Blue', 'A tiny blue butterfly that held still just long enough.', 'Up close')],
+  ];
+  for (const [t, y, p] of up) hang(N, t, y, { ...p, w:2.45, h:undefined });
+  pictureLight(N, 2.4, 4.35, 2.45, 3.4); pictureLight(N, 11.6, 4.35, 2.45, 3.4);
+
+  /* east wall (the door you came in): northern Spain on the left, Paris and Andorra on the right */
+  sec(E, 2.85, 4.32, 'NORTHERN SPAIN', 'León, Asturias, Santiago and the end of the world', 5);
+  const grid6 = (W, t0, rows) => rows.forEach(([y, items]) => items.forEach((p, i) => hang(W, t0 + i*1.7, y, { ...p, w:1.55, h:undefined })));
+  grid6(E, 1.15, [[3.35, [
+      it('ph-leon-gaudi', 'Drawing with Gaudí', 'León. A sketchbook out on the bench next to the bronze Gaudí, in front of Casa Botines.', 'Northern Spain'),
+      it('ph-covadonga-cave', 'Through the cave', 'Covadonga. The Santa Cueva frames the cross, and the basilica behind it.', 'Northern Spain'),
+      it('ph-covadonga-basilica', 'The basilica', 'Covadonga’s pink stone basilica, with the green mountains around it.', 'Northern Spain') ]],
+    [1.85, [
+      it('ph-covadonga-mist', 'Lagos de Covadonga', 'The clouds came down to sit on the lake.', 'Northern Spain'),
+      it('ph-santiago', 'Santiago de Compostela', 'The cathedral, at the end of the Camino.', 'Northern Spain'),
+      it('ph-fisterra', 'Finisterre', 'The lighthouse at Finisterre, the old “end of the world”, where the land runs out.', 'Northern Spain') ]]]);
+  pictureLight(E, 2.85, 3.95, 5, 2.6);
+  sec(E, 11.25, 4.32, 'PARIS', 'New Year’s, 2024 into 2025', 5);
+  grid6(E, 9.55, [[3.35, [
+      it('ph-paris-rider', 'The tower and the rider', 'The last day of 2024, grey and windy. The Eiffel Tower and a statue on horseback.', 'Paris'),
+      it('ph-paris-above', 'From up high', 'January 2025. The whole city, and the tower small on the horizon.', 'Paris'),
+      it('ph-paris-night', 'Lit up', 'The Eiffel Tower at night, searchlight sweeping through the mist.', 'Paris') ]]]);
+  sec(E, 11.25, 2.66, 'ANDORRA', '', 3);
+  for (const [t, p] of [[10.3, it('ph-roc-del-quer', 'On the way to Roc del Quer', 'Flowers in focus, the valley behind them. On the path to the Mirador Roc del Quer, near the big suspension bridge. One of my favorites.', 'Andorra')],
+                        [12.2, it('ph-daisies', 'Daisies', 'Same path, June 2026.', 'Andorra')]]) hang(E, t, 1.75, { ...p, w:1.75, h:undefined });
+  pictureLight(E, 11.25, 3.95, 5, 2.6);
+
+  /* south wall (door to Screen & stage): the US on both sides */
+  sec(S, 2.85, 4.32, 'NIAGARA & WASHINGTON', 'Spring 2026', 5);
+  for (const [t, y, p] of [
+      [1.6, 3.4, it('ph-niagara-falls', 'Horseshoe Falls', 'Niagara, with a rainbow in the spray. May 2026.', 'Niagara & Washington')],
+      [4.1, 3.4, it('ph-niagara-boat', 'Into the mist', 'The boat full of red ponchos heads straight for the falls.', 'Niagara & Washington')],
+      [1.6, 1.7, it('ph-dc-mall', 'The National Mall', 'Washington, D.C., from high above the Mall. March 2026.', 'Niagara & Washington')],
+      [4.1, 1.7, it('ph-dc-jefferson', 'The Jefferson Memorial', 'Across the Tidal Basin, with the ducks.', 'Niagara & Washington')]]) hang(S, t, y, { ...p, w:2.2, h:undefined });
+  pictureLight(S, 2.85, 4.15, 5, 2.6);
+  sec(S, 11.15, 4.32, 'LETCHWORTH', 'April 2026 · “the Grand Canyon of the East”, an hour from Rochester', 5);
+  grid6(S, 9.45, [[3.35, [
+      it('ph-letch-rainbow', 'Rainbow falls', 'The spray throws a rainbow right across the gorge.', 'Letchworth'),
+      it('ph-letch-falls', 'Upper Falls', 'Spring melt, so the river was loud.', 'Letchworth'),
+      it('ph-letch-gorge', 'The gorge', 'Cliffs on both sides, and the falls at the bottom.', 'Letchworth') ]],
+    [1.85, [
+      it('ph-letch-bridge', 'The little bridge', 'An old stone culvert on the trail.', 'Letchworth'),
+      it('ph-letch-trail', 'The trail', 'Tall pines and the path along the rim.', 'Letchworth'),
+      it('ph-letch-bird', 'Spotted', 'A bird in the bare branches. I took about thirty to get one.', 'Letchworth') ]]]);
+  pictureLight(S, 11.15, 3.95, 5, 2.6);
+  // a bench in the middle, to sit and look at the eclipse
+  { const b = new THREE.Group(); b.position.set(-15.5, 0, 14); b.rotation.y = Math.PI/2; world.add(b); OBST.push({ x:-15.5, z:14, r:.9 });
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(2.0, .08, .55), woodMat); seat.position.y = .45; b.add(seat); blockers.push(seat);
+    for (const sx of [-.85, .85]){ const leg = new THREE.Mesh(new THREE.BoxGeometry(.08, .45, .5), darkMat); leg.position.set(sx, .225, 0); b.add(leg); } }
 }
 let galaxyMesh;
 { // Builds
@@ -1408,8 +1480,17 @@ function drawTV(){
   const west = [ P('ex/paris-eiffel','Eiffel Tower','He wanted the whole tower in the shot. He did not get the whole tower in the shot.'), P('ex/paris-view','From the top','Trocadéro below, La Défense on the horizon, Apollo taking it all in.'), P('ex/paris-boat','On the Seine','The tower again, from the boat. Once was not enough.'), P('ex/paris-mona','The Louvre','Two famous faces in the room. Only one of them in focus.'), P('ex/paris-apollo-statue','Also the Louvre','Meeting someone with similar hair.'), P('ex/madrid-alcala','Madrid','Puerta de Alcalá. Apollo up close, the gate for scale.'),
     P('ex/astorga-palace','Astorga',"Gaudí's palace. He looked up the whole time."), P('ex/astorga-gate','Astorga, again','Same palace, through the gate. Holding on tight.'), P('ex/chocolate','Museo del Chocolate','Astorga’s chocolate museum. Apollo got the hug, not the chocolate.'), P('ex/covadonga-lion','Asturias','The lion was not impressed.'), P('ex/cangas-bridge','Cangas de Onís','The Roman bridge, with Apollo leaning on the railing like he owns it.') ];
   const east = [ P('ex/covadonga-lake','Lago Enol','Lagos de Covadonga. Front row seat; the mountain kept its head in the clouds.'), P('ex/irene-lake','Lago Enol, windy','So windy that only Apollo managed to keep his eyes open.'), P('ex/javi-covadonga','Lago Enol, with me','Me at the Lagos de Covadonga, with the usual travel buddy.'), P('ex/basilica-selfie','Covadonga','The basilica, and three of us squeezed into one selfie.'), P('ex/andorra','Andorra','At the second longest hanging bridge in the world. He was very brave.'), P('ex/santiago','Santiago de Compostela',"At the end of the Camino. We didn't walk it. We were just there."),
-    P('ex/retiro','El Retiro','Madrid. Apollo as a hat.'), P('ex/tree','Up a tree','I did not put him there. (I put him there.)'), P('ex/beach','Beach day','On the turtle towel. Sand everywhere, no regrets.'), P('ex/nap','Too much sightseeing','Nap on the pavement. Backpack on standby.'), P('ex/vr','Trying VR','He says he saw everything.'), P('ex/straw-hat','Road trip','Sun hat on, ready for the next stop.') ];
+    P('ex/retiro','El Retiro','Madrid. Apollo as a hat.'), P('ex/beach','Beach day','On the turtle towel. Sand everywhere, no regrets.'), P('ex/nap','Too much sightseeing','Nap on the pavement. Backpack on standby.'), P('ex/vr','Trying VR','He says he saw everything.'), P('ex/straw-hat','Road trip','Sun hat on, ready for the next stop.') ];
   const cols = [1.9, 4.35, 6.8, 9.25, 11.7, 14.15];
+  // south wall, either side of the door: the Louvre, Benjamín, and the end of the world
+  { const Sa = wf('apollo','S'), Q = (src, title, cap, w) => ({ src, title, cap, w, depth:0, light:false });
+    hang(Sa, 1.6, 3.5, Q('ex/ap-galerie', 'His own gallery', 'The Louvre has a whole Galerie d’Apollon. He took it personally. January 2025.', 2.2));
+    hang(Sa, 4.1, 3.5, Q('ex/ap-crown', 'Apollo’s crown jewels', 'Inspecting the jewels in his gallery, January 2025. Ten months later, thieves got into this same room and took eight pieces of the crown jewels in under eight minutes. Apollo would like it noted that he was nowhere near Paris that day.', 2.2));
+    hang(Sa, 2.85, 1.65, Q('ex/ap-moto', 'Easy rider', 'A motorbike carved out of stone, in Asturias. He drove.', 2.2));
+    hang(Sa, 10.0, 3.25, Q('ex/tree', 'Meet Benjamín', 'This tree in Oviedo’s Campo de San Francisco has its own Google Maps pin, “Árbol - Benjamín Menéndez”, with five stars. Irene and I found that so funny that Apollo had to meet him.', 2.3));
+    hang(Sa, 12.6, 3.0, { src:'ex/ap-benjamin', title:'Up in Benjamín', cap:'Apollo in Benjamín’s branches. We posted this one to the tree’s Google Maps page.', h:2.6, depth:0, light:false });
+    hang(Sa, 10.0, 1.45, Q('ex/ap-fisterra', 'The end of the world', 'Finisterre, the old end of the world. Me and Apollo on my shoulder, looking at nothing but ocean.', 1.85));
+    pictureLight(Sa, 2.85, 4.3, 5, 2.6); pictureLight(Sa, 11.3, 4.4, 4.6, 3); }
   for (const [list, W] of [[west, Wl], [east, E]]){ list.forEach((it, i) => hang(W, cols[i % 6], i < 6 ? 3.6 : 1.5, it)); pictureLight(W, 8, 4.55, 14); }
 }
 /* Apollo in 360: 72 views cut out of my turntable video. The pedestal shows whichever view matches where you stand. */
