@@ -468,20 +468,31 @@ function hologram(top, label){
   return g;
 }
 
-/* a lectern by each room's door with what the room is about */
-function infoStand(key, door, side, p){
-  const r = ROOMS[key], inward = new THREE.Vector3(), tang = new THREE.Vector3();
-  if (door.along === 'x'){ inward.set(0,0, door.z === r.z0 ? 1 : -1); tang.set(1,0,0); } else { inward.set(door.x === r.x0 ? 1 : -1, 0, 0); tang.set(0,0,1); }
-  const pos = new THREE.Vector3(door.x, 0, door.z).addScaledVector(inward, 1.25).addScaledVector(tang, side*(DW/2 + .9));
-  const g = new THREE.Group(); g.position.copy(pos); g.rotation.y = faceRot(inward.clone().negate()); world.add(g);
-  const post = new THREE.Mesh(new THREE.BoxGeometry(.12, 1.0, .12), brassMat); post.position.y = .5; g.add(post);
-  const base = new THREE.Mesh(new THREE.BoxGeometry(.5, .04, .4), brassMat); base.position.y = .02; g.add(base);
-  const top = new THREE.Group(); top.position.set(0, 1.08, 0); top.rotation.x = -.62; g.add(top);
-  const slab = new THREE.Mesh(new THREE.BoxGeometry(.84, .58, .04), frameMat); top.add(slab);
-  const face = textPanel(.8, .54, { ...p, dark:true }); face.position.z = .022; top.add(face);
+/* a lectern OUTSIDE each room, beside its door, so you can read what's inside before you go in */
+function standTex(p){ const w = 900, h = 620; return canvasTex(w, h, (g)=>{
+  g.fillStyle='#0f1d44'; g.fillRect(0,0,w,h); g.fillStyle='#E8B44A'; g.fillRect(0,0,w,14);
+  g.strokeStyle='rgba(232,180,74,.35)'; g.lineWidth=3; g.strokeRect(26,40,w-52,h-66);
+  const pad = 70, mw = w - pad*2; let k = 1;
+  const lay = (draw) => { let y = 120;
+    g.font=`600 ${32*k}px "JetBrains Mono", monospace`; g.fillStyle='#E8B44A'; if (draw) g.fillText(p.kicker.toUpperCase(), pad, y);
+    g.font=`600 ${86*k}px Fraunces, Georgia, serif`; g.fillStyle='#EFE8D8'; y += 100*k; y = draw ? wrap(g, p.title, pad, y, mw, 92*k) : measure(g, p.title, y, 92*k, mw);
+    g.font=`400 ${40*k}px "Bricolage Grotesque", system-ui, sans-serif`; g.fillStyle='#C9CFDE'; y += 70*k; y = draw ? wrap(g, p.body, pad, y, mw, 54*k) : measure(g, p.body, y, 54*k, mw);
+    return y; };
+  while (k > .55 && lay(false) > h - 60) k *= .94;
+  lay(true); }); }
+function infoStand(key, door, side, p, off = DW/2 + 1.5){
+  const from = door.a === key ? door.b : door.a, r = ROOMS[from], n = new THREE.Vector3(), tang = new THREE.Vector3();
+  if (door.along === 'x'){ n.set(0,0, door.z === r.z0 ? 1 : -1); tang.set(1,0,0); } else { n.set(door.x === r.x0 ? 1 : -1, 0, 0); tang.set(0,0,1); }
+  const pos = new THREE.Vector3(door.x, 0, door.z).addScaledVector(n, 1.0).addScaledVector(tang, side*off);
+  const g = new THREE.Group(); g.position.copy(pos); g.rotation.y = faceRot(n); world.add(g);
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(.22, .26, .04, 32), brassMat); base.position.y = .02; g.add(base);
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(.035, .035, 1.0, 16), brassMat); post.position.y = .52; g.add(post);
+  const top = new THREE.Group(); top.position.set(0, 1.06, 0); top.rotation.x = -.6; g.add(top);
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(.96, .68, .035), frameMat); top.add(slab);
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(.9, .62), new THREE.MeshBasicMaterial({ map:standTex(p), color:0xe6e1d6 })); face.position.z = .019; top.add(face);
+  const lipM = new THREE.Mesh(new THREE.BoxGeometry(.96, .03, .05), brassMat); lipM.position.set(0, -.35, .03); top.add(lipM);
   OBST.push({ x:pos.x, z:pos.z, r:.45 });
-  const ex = { center:pos.clone().setY(1.1), normal:inward.clone().negate(), w:.9, h:.6, room:key, dist:1.6, kick:p.kicker, title:p.title, cap:p.body };
-  return addExhibit(g, ex);
+  return addExhibit(g, { center:pos.clone().setY(1.1), normal:n.clone(), w:.96, h:.7, room:from, dist:1.7, kick:p.kicker, title:p.title, cap:p.body });
 }
 const doorOf = (a, b) => DOORS.find(d => (d.a===a && d.b===b) || (d.a===b && d.b===a));
 
@@ -555,8 +566,7 @@ for (const d of DOORS){
     ['eclipse-7-partial-filter','Partial again','Through a solar filter. The bite is on the other side now. Nikon D5100.'],
   ];
   row(eW, 2.1, .3, 13.7, ec.map(([s,t,c]) => ({ src:'../images/'+s, h:1.12, depth:0, kick:'The eclipse', title:t, cap:c })));
-  hang(S, 3.3, 2.3, { src:'ex/griffith', w:3.4, depth:.16, kick:'Pixel phone', title:'Griffith Observatory', cap:'Sunset at the observatory from La La Land. I had to go.' });
-  hang(S, 10.8, 2.3, { src:'ex/griffith-hollywood', w:3.4, depth:.16, kick:'Pixel phone', title:'Golden hour', cap:'Same evening, looking at the Hollywood sign. The sky did all the work.' });
+  panel(S, 7, 2.3, 3.4, 2.0, { kicker:'Coming soon', title:'More photos', body:'This wall is saving space for the next batch of photos. More of the sky, more landscapes, more Apollo.' });
   panel(E, 2.9, 2.3, 2.9, 1.9, { kicker:'The camera', title:'Nikon D5100', body:'My camera for the sky and landscapes. Working at a media lab does not help my camera gear wishlist.' });
   panel(E, 11.1, 2.3, 2.9, 1.9, { kicker:'The other camera', title:'Whatever’s in my pocket', body:'Some of my favorite shots are from my phone, because it was the one I had on me.' });
 }
@@ -601,79 +611,147 @@ let galaxyMesh;
   hang(E, 9.6, 2.3, { src:'ex/glasses-american', h:2.2, depth:.15, kick:'Built by hand', title:'Work in progress', cap:'The second pair, one bead at a time.' });
   panel(S, 4.0, 2.3, 3.0, 1.9, { kicker:'Coming soon', title:'3D scans', body:'Most of these builds live in Spain. When I’m home, each one gets scanned and replaces its photo on the pedestal.' });
 }
-{ // Screen & stage
-  const N = wf('screen','N'), S = wf('screen','S'), Wl = wf('screen','W'), E = wf('screen','E');
-  infoStand('screen', doorOf('me','screen'), -1, { kicker:'Me · Room 3', title:'Screen & stage', body:'Movies on the biggest screen I can find, musicals, concerts, and what I listen to.' });
-  panel(N, 11.5, 2.3, 2.8, 1.9, { kicker:'Movies', title:'The biggest screen', body:'IMAX or Dolby Cinema whenever I can. I went to the La La Land 10th anniversary re-release just to see it in Dolby.' });
-  panel(N, 15.0, 2.3, 2.8, 1.9, { kicker:'On repeat', title:'Music', body:'Hamilton, Olivia Rodrigo, Bear Ghost and Lovejoy. Also the Persona soundtracks, even though I’ve never played Persona.' });
-  // standees, designed here, with my photos on them
-  const standeeArt = {
-    lalaland: (g,w,h) => { const s = g.createLinearGradient(0,0,0,h); s.addColorStop(0,'#1b1550'); s.addColorStop(.6,'#5a3a8f'); s.addColorStop(1,'#e79a6b'); g.fillStyle=s; g.fillRect(0,0,w,h);
-      for (let i=0;i<120;i++){ g.fillStyle=`rgba(255,255,255,${rnd()*.8})`; g.beginPath(); g.arc(rnd()*w, rnd()*h*.6, rnd()*2.4, 0, 7); g.fill(); }
-      g.fillStyle='#120d33'; g.beginPath(); g.moveTo(0,h); for (let x=0;x<=w;x+=20) g.lineTo(x, h*.86 - Math.sin(x*.01)*30 - Math.sin(x*.031)*14); g.lineTo(w,h); g.fill(); },
-    spidey: (g,w,h) => { const s = g.createLinearGradient(0,0,w,h); s.addColorStop(0,'#b3132b'); s.addColorStop(1,'#13224f'); g.fillStyle=s; g.fillRect(0,0,w,h);
-      g.fillStyle='rgba(5,10,30,.55)'; for (let x=0;x<w;x+=46){ const bh = 120+rnd()*260; g.fillRect(x, h-bh, 40, bh); g.fillStyle='rgba(255,220,140,.35)'; for (let y=h-bh+12;y<h-10;y+=22) for (let xx=x+6;xx<x+36;xx+=12) if (rnd()<.4) g.fillRect(xx,y,6,9); g.fillStyle='rgba(5,10,30,.55)'; } },
-    hamilton: (g,w,h) => { const s = g.createRadialGradient(w/2,h*.35,20,w/2,h*.4,h*.8); s.addColorStop(0,'#e3a24a'); s.addColorStop(1,'#4a2410'); g.fillStyle=s; g.fillRect(0,0,w,h);
-      for (let i=0;i<3000;i++){ g.fillStyle=`rgba(${rnd()<.5?0:255},${rnd()<.5?0:200},0,.05)`; g.fillRect(rnd()*w, rnd()*h, 3, 3); } },
-    guts: (g,w,h) => { const s = g.createLinearGradient(0,0,0,h); s.addColorStop(0,'#2a0a45'); s.addColorStop(1,'#a53cc9'); g.fillStyle=s; g.fillRect(0,0,w,h);
-      for (let i=0;i<300;i++){ g.fillStyle=`rgba(255,${180+rnd()*70},255,${rnd()*.7})`; const x=rnd()*w, y=rnd()*h, r=rnd()*3; g.beginPath(); g.moveTo(x,y-r*2); g.lineTo(x+r,y); g.lineTo(x,y+r*2); g.lineTo(x-r,y); g.fill(); } },
-  };
-  function standee(x, z, yaw, { art, title, sub, photo, caption, kick }){
-    const W = 1.2, Hh = 2.05, S = 400;
-    const face = canvasTex(W*S, Hh*S, (g,w,h)=>{ standeeArt[art](g,w,h);
-      g.fillStyle='rgba(0,0,0,.25)'; g.fillRect(0,h*.72,w,h*.28);
-      g.textAlign='center'; g.fillStyle='#fff'; g.font=`600 ${title.length > 12 ? 62 : 84}px Fraunces, Georgia, serif`; g.shadowColor='rgba(0,0,0,.5)'; g.shadowBlur=18;
-      g.fillText(title, w/2, h*.13); g.shadowBlur=0;
-      g.font='600 22px "JetBrains Mono", monospace'; g.fillStyle='#ffe2a8'; g.fillText(sub.toUpperCase(), w/2, h*.18);
-      g.font='400 30px "Bricolage Grotesque", sans-serif'; g.fillStyle='#fff'; g.textAlign='left'; wrap(g, caption, 46, h*.79, w-92, 38); });
-    const grp = new THREE.Group(); grp.position.set(x, 0, z); grp.rotation.y = yaw; world.add(grp);
-    const board = new THREE.Mesh(new THREE.BoxGeometry(W, Hh, .03), [new THREE.MeshStandardMaterial({ color:0xb89a6e }), new THREE.MeshStandardMaterial({ color:0xb89a6e }), new THREE.MeshStandardMaterial({ color:0xb89a6e }), new THREE.MeshStandardMaterial({ color:0xb89a6e }), new THREE.MeshBasicMaterial({ map:face }), new THREE.MeshStandardMaterial({ color:0xa48660 })]);
-    board.position.y = Hh/2 + .02; board.rotation.x = -.04; grp.add(board);
-    const a = A[photo], ph_h = .95, ph_w = Math.min(1.0, ph_h*a), ph_hh = ph_w/a;
-    const ph = photoMesh(photo, ph_w, ph_hh, 0, 0); ph.position.set(0, Hh*.5 + .1, .02); ph.rotation.x = -.04; board.add(ph); ph.position.set(0, .1, .017);
-    const strut = new THREE.Mesh(new THREE.BoxGeometry(.05, 1.5, .03), new THREE.MeshStandardMaterial({ color:0xa48660 })); strut.position.set(0, .75, -.25); strut.rotation.x = .32; grp.add(strut);
-    OBST.push({ x, z, r:.7 });
-    const nrm = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
-    addExhibit(grp, { center:new THREE.Vector3(x, 1.25, z), normal:nrm, w:W, h:Hh, room:'screen', dist:2.7, kick, title, cap:caption });
-  }
-  standee(-17, 26.6, Math.PI*.88, { art:'lalaland', title:'La La Land', sub:'10th anniversary · Dolby Cinema', photo:'ex/lalaland-dolby', kick:'Screen', caption:'I went to the 10th anniversary re-release just to see it in Dolby. Worth it.' });
-  standee(-12.6, 27.6, Math.PI, { art:'spidey', title:'Spider-Man', sub:'In theaters · summer 2026', photo:'ex/spidey-booth', kick:'Screen', caption:'Opening with the photo booth, the popcorn bucket and the person I go to every movie with.' });
-  standee(-8.2, 27.6, Math.PI, { art:'hamilton', title:'Hamilton', sub:'West Herr Auditorium Theatre', photo:'ex/hamilton-playbill', kick:'Stage', caption:'Hamilton live in Rochester, after years of listening to the cast album.' });
-  standee(-3.8, 26.6, -Math.PI*.88, { art:'guts', title:'GUTS tour', sub:'Olivia Rodrigo · live', photo:'ex/guts-selfie', kick:'Stage', caption:'Glitter on, handmade glasses on, screaming every word.' });
-  // west wall: the photos that go with them
-  hang(Wl, 3.4, 2.3, { src:'ex/spidey-popcorn', w:2.6, depth:.18, kick:'Screen', title:'Priorities', cap:'The Spider-Man popcorn bucket. I’m not ashamed.' });
-  hang(Wl, 7.7, 2.3, { src:'ex/hamilton-poster', h:2.3, depth:.12, kick:'Stage', title:'Hamilton', cap:'The poster from the show, up on my wall.' });
-  hang(Wl, 11.4, 2.3, { src:'ex/hamilton-bows', w:2.7, depth:.16, kick:'Stage', title:'Curtain call', cap:'The whole cast bowing at the end of Hamilton.' });
-  // south wall: a "now showing" marquee and the concert
-  const mq = canvasTex(1600, 600, (g,w,h)=>{
-    g.fillStyle='#120a0a'; g.fillRect(0,0,w,h); g.strokeStyle='#E8B44A'; g.lineWidth=10; g.strokeRect(30,30,w-60,h-60);
-    for (let x=50;x<w-40;x+=48){ for (const y of [50, h-50]){ g.fillStyle='#ffe6a8'; g.beginPath(); g.arc(x,y,9,0,7); g.fill(); } }
-    for (let y=98;y<h-80;y+=48){ for (const x of [50, w-50]){ g.fillStyle='#ffe6a8'; g.beginPath(); g.arc(x,y,9,0,7); g.fill(); } }
-    g.textAlign='center'; g.fillStyle='#E8B44A'; g.font='600 40px "JetBrains Mono", monospace'; g.fillText('NOW SHOWING IN MY HEAD', w/2, 140);
-    g.fillStyle='#fff6e0'; g.font='600 70px Fraunces, Georgia, serif';
-    ['LA LA LAND · 10TH ANNIVERSARY','SPIDER-MAN','HAMILTON','GUTS WORLD TOUR'].forEach((s,i) => g.fillText(s, w/2, 240 + i*86)); });
-  const mm = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 1.95), new THREE.MeshBasicMaterial({ map:mq, toneMapped:false })); place(mm, S, 10.5, 3.2, .04);
-  addExhibit(mm, { center:onWall(S, 10.5, 3.2, .1), normal:S.n.clone(), w:5.2, h:1.95, room:'screen', kick:'Screen & stage', title:'Now showing', cap:'Everything in this room, on one sign.' });
-  hang(S, 16.6, 2.2, { src:'ex/guts-stage', w:2.7, depth:.12, kick:'Stage', title:'GUTS', cap:'The stage before the show started.' });
-  hang(S, 5.1, 2.2, { src:'ex/glasses-selfie', h:2.2, depth:.12, kick:'Stage', title:'Concert ready', cap:'Trying on the glasses before the show.' });
+/* ---------- small reusable props ---------- */
+const paperMat = new THREE.MeshStandardMaterial({ color:0xf3eee2, roughness:.95 });
+const glassMat = new THREE.MeshPhysicalMaterial({ color:0xffffff, roughness:.05, transmission:.9, transparent:true, opacity:.35, thickness:.02 });
+function numberTex(n, { bg='#f5f1e8', fg='#1b1b1b', size=128, round=true } = {}){
+  return canvasTex(size, size, (g,w,h)=>{ g.fillStyle=bg; if (round){ g.beginPath(); g.arc(w/2,h/2,w/2,0,7); g.fill(); } else g.fillRect(0,0,w,h);
+    g.fillStyle=fg; g.textAlign='center'; g.textBaseline='middle'; g.font=`700 ${size*.55}px Georgia, serif`; g.fillText(String(n), w/2, h/2+size*.03);
+    if (n === 6 || n === 9) { g.fillRect(w*.38, h*.8, w*.24, h*.04); } });
 }
+// a d6 with real pips on every face
+const pipTex = (() => { const cache = {}; return (n, bg, fg) => { const k = n+bg+fg; if (cache[k]) return cache[k];
+  return cache[k] = canvasTex(96, 96, (g,w,h)=>{ g.fillStyle=bg; g.fillRect(0,0,w,h); g.fillStyle=fg;
+    const P = { 1:[[.5,.5]], 2:[[.27,.27],[.73,.73]], 3:[[.25,.25],[.5,.5],[.75,.75]], 4:[[.27,.27],[.73,.27],[.27,.73],[.73,.73]],
+      5:[[.25,.25],[.75,.25],[.5,.5],[.25,.75],[.75,.75]], 6:[[.27,.22],[.73,.22],[.27,.5],[.73,.5],[.27,.78],[.73,.78]] }[n];
+    for (const [x,y] of P){ g.beginPath(); g.arc(x*w, y*h, w*.09, 0, 7); g.fill(); } }); }; })();
+function d6(size=.03, bg='#f5f1e8', fg='#1b1b1b'){
+  const order = [3,4,1,6,2,5]; // +x,-x,+y,-y,+z,-z (opposite faces add to 7)
+  const m = new THREE.Mesh(new THREE.BoxGeometry(size,size,size), order.map(n => new THREE.MeshStandardMaterial({ map:pipTex(n,bg,fg), roughness:.35 })));
+  m.rotation.y = rnd()*Math.PI; return m;
+}
+// any polyhedral die with a number on each face (numbers are small decals)
+function polyDie(geo, color, r){
+  const g = new THREE.Group(); const body = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color, roughness:.25, metalness:.05 })); g.add(body);
+  const pos = geo.toNonIndexed().attributes.position, faces = [];
+  for (let i=0;i<pos.count;i+=3){ const a = new THREE.Vector3().fromBufferAttribute(pos,i), b = new THREE.Vector3().fromBufferAttribute(pos,i+1), c = new THREE.Vector3().fromBufferAttribute(pos,i+2);
+    const n = new THREE.Vector3().subVectors(b,a).cross(new THREE.Vector3().subVectors(c,a)).normalize(), ctr = a.add(b).add(c).divideScalar(3);
+    const f = faces.find(f => f.n.dot(n) > .99); if (f){ f.c.add(ctr); f.k++; } else faces.push({ n, c:ctr.clone(), k:1 }); }
+  faces.forEach((f, i) => { f.c.divideScalar(f.k);
+    const d = new THREE.Mesh(new THREE.PlaneGeometry(r*.55, r*.55), new THREE.MeshBasicMaterial({ map:numberTex(i+1, { bg:'rgba(0,0,0,0)', fg:'#fff4d6', round:false }), transparent:true, depthWrite:false }));
+    d.position.copy(f.c).addScaledVector(f.n, .0012); d.lookAt(d.position.clone().add(f.n)); g.add(d); });
+  g.rotation.set(rnd()*6, rnd()*6, rnd()*6); return g;
+}
+function drinkGlass(liquid, h=.12){
+  const g = new THREE.Group();
+  const cup = new THREE.Mesh(new THREE.CylinderGeometry(.034, .028, h, 24, 1, true), glassMat); cup.position.y = h/2; g.add(cup);
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(.028, .028, .008, 24), glassMat); base.position.y = .004; g.add(base);
+  const liq = new THREE.Mesh(new THREE.CylinderGeometry(.031, .027, h*.7, 24), new THREE.MeshStandardMaterial({ color:liquid, roughness:.1, transparent:true, opacity:.85 })); liq.position.y = h*.36; g.add(liq);
+  return g;
+}
+function soda(color, label){
+  const g = new THREE.Group();
+  const lab = canvasTex(256, 128, (c,w,h)=>{ c.fillStyle=color; c.fillRect(0,0,w,h); c.fillStyle='rgba(255,255,255,.9)'; c.font='700 44px "Bricolage Grotesque", sans-serif'; c.fillText(label, 18, 82); });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(.033,.033,.115,24), [new THREE.MeshStandardMaterial({ map:lab, roughness:.3, metalness:.4 }), new THREE.MeshStandardMaterial({ color:0xc9ccd1, metalness:.9, roughness:.3 }), new THREE.MeshStandardMaterial({ color:0xc9ccd1, metalness:.9, roughness:.3 })]);
+  body.position.y = .0575; g.add(body); return g;
+}
+function croissant(){
+  const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color:0xc9842f, roughness:.6 });
+  for (let i=-2;i<=2;i++){ const s = new THREE.Mesh(new THREE.SphereGeometry(.03, 14, 10), m); const a = i*.32;
+    s.scale.set(1.25 - Math.abs(i)*.18, .75 - Math.abs(i)*.1, .9 - Math.abs(i)*.12); s.position.set(Math.sin(a)*.06, .02, -Math.cos(a)*.06 + .06); s.rotation.y = a; g.add(s); }
+  return g;
+}
+function bowl(r=.08){
+  const pts = []; for (let i=0;i<=12;i++){ const t = i/12; pts.push(new THREE.Vector2(r*(.45 + .55*Math.sin(t*Math.PI/2)), t*r*.6)); }
+  const b = new THREE.Mesh(new THREE.LatheGeometry(pts, 32), new THREE.MeshStandardMaterial({ color:0xe9e2d2, roughness:.35, side:THREE.DoubleSide })); return b;
+}
+function seeds(count, spread, y0, mat, scale=[.006,.0035,.012], heap=0){
+  const geo = new THREE.SphereGeometry(1, 8, 6), inst = new THREE.InstancedMesh(geo, mat, count), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
+  for (let i=0;i<count;i++){ const a = rnd()*Math.PI*2, r = Math.sqrt(rnd())*spread;
+    e.set(rnd()*.6, rnd()*6, rnd()*.6); q.setFromEuler(e);
+    m4.compose(new THREE.Vector3(Math.cos(a)*r, y0 + heap*(1 - r/spread)*rnd(), Math.sin(a)*r), q, new THREE.Vector3(...scale)); inst.setMatrixAt(i, m4); }
+  return inst;
+}
+const seedMat = new THREE.MeshStandardMaterial({ map:canvasTex(64, 64, (g,w,h)=>{ g.fillStyle='#2b2b2b'; g.fillRect(0,0,w,h); g.fillStyle='#d8d2c4'; for (let x=4;x<w;x+=12) g.fillRect(x,0,3,h); }), roughness:.6 });
+const shellMat = new THREE.MeshStandardMaterial({ color:0x6b665d, roughness:.9 });
+
+/* ---------- standees ---------- */
+const standeeArt = {
+  lalaland: (g,w,h) => { const s = g.createLinearGradient(0,0,0,h); s.addColorStop(0,'#1b1550'); s.addColorStop(.6,'#5a3a8f'); s.addColorStop(1,'#e79a6b'); g.fillStyle=s; g.fillRect(0,0,w,h);
+    for (let i=0;i<140;i++){ g.fillStyle=`rgba(255,255,255,${rnd()*.8})`; g.beginPath(); g.arc(rnd()*w, rnd()*h*.6, rnd()*2.4, 0, 7); g.fill(); }
+    g.fillStyle='#120d33'; g.beginPath(); g.moveTo(0,h); for (let x=0;x<=w;x+=20) g.lineTo(x, h*.86 - Math.sin(x*.01)*30 - Math.sin(x*.031)*14); g.lineTo(w,h); g.fill();
+    g.strokeStyle='rgba(255,230,160,.8)'; g.lineWidth=3; for (let i=0;i<9;i++){ const x = 40 + i*(w-80)/8; g.beginPath(); g.moveTo(x, h*.86); g.lineTo(x, h*.80); g.stroke(); g.fillStyle='#ffe6a8'; g.beginPath(); g.arc(x, h*.795, 5, 0, 7); g.fill(); } },
+  spidey: (g,w,h) => { const s = g.createLinearGradient(0,0,w,h); s.addColorStop(0,'#b3132b'); s.addColorStop(1,'#13224f'); g.fillStyle=s; g.fillRect(0,0,w,h);
+    g.strokeStyle='rgba(255,255,255,.12)'; g.lineWidth=2; const cx = w*.85, cy = h*.08;
+    for (let i=0;i<14;i++){ const a = Math.PI*.5 + i*Math.PI/26; g.beginPath(); g.moveTo(cx,cy); g.lineTo(cx + Math.cos(a)*h*1.5, cy + Math.sin(a)*h*1.5); g.stroke(); }
+    for (let r=60;r<h*1.4;r+=70){ g.beginPath(); g.arc(cx, cy, r, Math.PI*.5, Math.PI); g.stroke(); }
+    g.fillStyle='rgba(5,10,30,.6)'; for (let x=0;x<w;x+=46){ const bh = 120+rnd()*260; g.fillRect(x, h-bh, 40, bh); g.fillStyle='rgba(255,220,140,.35)'; for (let y=h-bh+12;y<h-10;y+=22) for (let xx=x+6;xx<x+36;xx+=12) if (rnd()<.4) g.fillRect(xx,y,6,9); g.fillStyle='rgba(5,10,30,.6)'; } },
+  hamilton: (g,w,h) => { const s = g.createRadialGradient(w/2,h*.35,20,w/2,h*.4,h*.8); s.addColorStop(0,'#e3a24a'); s.addColorStop(1,'#4a2410'); g.fillStyle=s; g.fillRect(0,0,w,h);
+    for (let i=0;i<3000;i++){ g.fillStyle=`rgba(${rnd()<.5?0:255},${rnd()<.5?0:200},0,.05)`; g.fillRect(rnd()*w, rnd()*h, 3, 3); }
+    g.fillStyle='rgba(40,20,8,.35)'; for (let i=0;i<5;i++){ g.fillRect(0, h*.62 + i*16, w, 3); } },
+  guts: (g,w,h) => { const s = g.createLinearGradient(0,0,0,h); s.addColorStop(0,'#2a0a45'); s.addColorStop(1,'#a53cc9'); g.fillStyle=s; g.fillRect(0,0,w,h);
+    for (let i=0;i<300;i++){ g.fillStyle=`rgba(255,${180+rnd()*70},255,${rnd()*.7})`; const x=rnd()*w, y=rnd()*h, r=rnd()*3; g.beginPath(); g.moveTo(x,y-r*2); g.lineTo(x+r,y); g.lineTo(x,y+r*2); g.lineTo(x-r,y); g.fill(); } },
+};
+const cardboard = new THREE.MeshStandardMaterial({ color:0xb89a6e, roughness:.95 }), cardboardDark = new THREE.MeshStandardMaterial({ color:0x9c7f58, roughness:.95 });
+function standee(room, x, z, yaw, { art, title, sub, photo, caption, kick, short }){
+  const W = 1.2, Hh = 2.05, S = 400;
+  const face = canvasTex(W*S, Hh*S, (g,w,h)=>{ standeeArt[art](g,w,h);
+    g.fillStyle='rgba(0,0,0,.3)'; g.fillRect(0,h*.7,w,h*.3);
+    g.textAlign='center'; g.fillStyle='#fff'; g.font=`600 ${title.length > 12 ? 62 : 84}px Fraunces, Georgia, serif`; g.shadowColor='rgba(0,0,0,.5)'; g.shadowBlur=18;
+    g.fillText(title, w/2, h*.13); g.shadowBlur=0;
+    g.font='600 22px "JetBrains Mono", monospace'; g.fillStyle='#ffe2a8'; g.fillText(sub.toUpperCase(), w/2, h*.18);
+    // photo frame shadow area
+    g.fillStyle='rgba(0,0,0,.35)'; g.fillRect(w*.08, h*.23, w*.84, h*.44);
+    g.font='400 27px "Bricolage Grotesque", sans-serif'; g.fillStyle='#fff'; g.textAlign='left';
+    const txt = short || caption; let k = 1; while (k > .6 && measure(g, txt, h*.75, 34*k, w-80) > h*.97){ k *= .92; g.font=`400 ${27*k}px "Bricolage Grotesque", sans-serif`; }
+    wrap(g, txt, 40, h*.75, w-80, 34*k); });
+  const grp = new THREE.Group(); grp.position.set(x, 0, z); grp.rotation.y = yaw; world.add(grp);
+  const board = new THREE.Mesh(new THREE.BoxGeometry(W, Hh, .012), [cardboardDark, cardboardDark, cardboardDark, cardboardDark, new THREE.MeshBasicMaterial({ map:face }), cardboard]);
+  board.position.y = Hh/2 + .03; board.rotation.x = -.05; grp.add(board);
+  const a = A[photo], maxW = W*.8, maxH = Hh*.42; let pw = maxW, ph = pw/a; if (ph > maxH){ ph = maxH; pw = ph*a; }
+  const pm = photoMesh(photo, pw, ph, 0, 0); pm.position.set(0, Hh*.05 - .02, .008); board.add(pm);
+  const pf = new THREE.Mesh(new THREE.PlaneGeometry(pw+.03, ph+.03), new THREE.MeshBasicMaterial({ color:0xf4ecd8 })); pf.position.set(0, Hh*.05 - .02, .007); board.add(pf);
+  const strut = new THREE.Mesh(new THREE.BoxGeometry(.18, 1.55, .008), cardboardDark); strut.position.set(0, .78, -.36); strut.rotation.x = .42; grp.add(strut);
+  const foot = new THREE.Mesh(new THREE.BoxGeometry(W, .04, .1), cardboardDark); foot.position.set(0, .02, .0); grp.add(foot);
+  OBST.push({ x, z, r:.7 });
+  addExhibit(grp, { center:new THREE.Vector3(x, 1.25, z), normal:new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)), w:W, h:Hh, room, dist:2.7, kick, title, cap:caption });
+}
+function sectionLabel(W, t, y, text, w=4){
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, .5), new THREE.MeshBasicMaterial({ transparent:true, map:canvasTex(w*256, 128, (g,cw,ch)=>{ g.textAlign='center';
+    g.fillStyle='#E8B44A'; g.font='600 46px "JetBrains Mono", monospace'; g.fillText(text.toUpperCase(), cw/2, 80);
+    g.fillRect(cw/2 - 180 - g.measureText(text).width*0, 98, 0, 0); }) }));
+  place(m, W, t, y, .02);
+}
+
+/* =========================================================
+   ROOM 3 · SCREEN & STAGE
+   ========================================================= */
 let platter, recordSpin = 0;
 const PLAYLISTS = [
   { id:'0tYoK6UNNgzSv1BfW91dSx', name:'INTENSE', desc:'For studying and homework when it feels last minute (so, most of the time). Very fast video game songs and a lot of motivation.', c:['#ff4d2e','#5a0d16'] },
   { id:'62Op5QmRp2kFne7rZ0sumh', name:'Yez', desc:'All the songs I listen to. Basically my liked songs.', c:['#f2c14e','#4b7bec'] },
   { id:'0Az10vq22U6EaCMjunGRg6', name:'Weird and Cool', desc:'Weird, story-like, theatrical, intense music I can’t really describe.', c:['#1fb5a5','#1a0f2e'] },
 ];
-{ // listening corner (Screen & stage, south-east)
-  const E = wf('screen','E');
-  const cab = new THREE.Group(); cab.position.set(-1.0, 0, 33.4); cab.rotation.y = -Math.PI/2; world.add(cab);
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.6, .8, .55), woodMat); body.position.y = .4; cab.add(body);
-  const deck = new THREE.Mesh(new THREE.BoxGeometry(.6, .1, .46), darkMat); deck.position.set(0, .85, 0); cab.add(deck);
-  platter = new THREE.Group(); platter.position.set(-.05, .91, 0); cab.add(platter);
-  const vinyl = new THREE.Mesh(new THREE.CylinderGeometry(.2, .2, .012, 48), new THREE.MeshStandardMaterial({ color:0x0b0b0b, roughness:.3 })); platter.add(vinyl);
-  const label = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, .014, 32), new THREE.MeshStandardMaterial({ color:0xE8B44A })); platter.add(label);
-  const arm = new THREE.Mesh(new THREE.BoxGeometry(.02, .02, .3), brassMat); arm.position.set(.2, .94, .05); arm.rotation.y = .4; cab.add(arm);
-  OBST.push({ x:-1.0, z:33.4, r:.9 });
-  addExhibit(cab, { center:new THREE.Vector3(-1, .9, 33.4), normal:new THREE.Vector3(-1,0,0), w:1.4, h:.9, room:'screen', dist:2.2, kick:'Listening corner', title:'Play my playlists', cap:'Three playlists: INTENSE, Yez, and Weird and Cool.', action:{ label:'Open the playlists', fn:() => openMusic() } });
+const MUSIC_TEXT = 'Fast video game soundtracks when I study, musicals like Hamilton, Olivia Rodrigo, and weird, theatrical, story-like songs from bands like Bear Ghost and Lovejoy. Plus the Persona soundtracks, even though I’ve never played Persona.';
+{
+  const N = wf('screen','N'), S = wf('screen','S'), Wl = wf('screen','W'), E = wf('screen','E');
+  infoStand('screen', doorOf('me','screen'), -1, { kicker:'Me · Room 3', title:'Screen & stage', body:'Movies on the biggest screen I can find, musicals, concerts, and a listening corner with my playlists.' }, 2.4);
+  // south wall: the screen (La La Land) on the right, the stage on the left
+  sectionLabel(S, 3.4, 3.95, 'Screen'); sectionLabel(S, 12.4, 3.95, 'Stage', 6);
+  hang(S, 1.6, 2.25, { src:'ex/griffith', w:2.2, depth:.14, kick:'Screen · La La Land', title:'Griffith Observatory', cap:'When my brother and I went to LA, I basically begged to go here, just because of the La La Land scenes.' });
+  hang(S, 4.0, 2.25, { src:'ex/griffith-hollywood', w:2.2, depth:.14, kick:'Screen · La La Land', title:'Golden hour at Griffith', cap:'Same evening, looking out at the Hollywood sign. Worth every minute of begging.' });
+  standee('screen', -6.25, 33.5, Math.PI, { art:'lalaland', title:'La La Land', sub:'10th anniversary · Dolby Cinema', photo:'ex/lalaland-dolby', kick:'Screen', caption:'I went to the 10th anniversary re-release just to see it in Dolby. Worth it.' });
+  hang(S, 7.9, 2.25, { src:'ex/hamilton-poster', h:2.0, depth:.1, kick:'Stage', title:'Hamilton', cap:'The poster from the show.' });
+  hang(S, 10.2, 2.25, { src:'ex/hamilton-bows', w:2.3, depth:.14, kick:'Stage', title:'Curtain call', cap:'The whole cast bowing at the end of Hamilton.' });
+  standee('screen', -12.3, 33.5, Math.PI, { art:'hamilton', title:'Hamilton', sub:'West Herr Auditorium Theatre', photo:'ex/hamilton-playbill', kick:'Stage', caption:'Hamilton live in Rochester, after years of listening to the cast album.' });
+  hang(S, 14.4, 2.25, { src:'ex/guts-stage', w:2.3, depth:.12, kick:'Stage', title:'GUTS', cap:'The stage before the show started.' });
+  hang(S, 16.5, 2.25, { src:'ex/glasses-selfie', h:2.0, depth:.1, kick:'Stage', title:'Concert ready', cap:'Trying on the handmade glasses before the show.' });
+  standee('screen', -18.45, 33.5, Math.PI*.9, { art:'guts', title:'GUTS tour', sub:'Olivia Rodrigo · live', photo:'ex/guts-selfie', kick:'Stage', caption:'Glitter on, handmade glasses on, screaming every word.' });
+  // west wall (straight ahead from the Play door): Spider-Man, the listening corner, music
+  hang(Wl, 3.4, 2.25, { src:'ex/spidey-popcorn', w:2.3, depth:.16, kick:'Screen', title:'Priorities', cap:'The Spider-Man popcorn bucket. Opening night needed it.' });
+  standee('screen', -18.4, 29.6, Math.PI/2, { art:'spidey', title:'Spider-Man', sub:'Opening night · VOSE', photo:'ex/spidey-booth', kick:'Screen',
+    caption:'Months before we started dating, my girlfriend and I agreed to watch “the next Spider-Man movie” together: an excuse to keep seeing each other, whatever happened. Three years together later, we saw it on opening night, in VOSE.', short:'A promise made before we were even dating. Kept, three years later.' });
+  sectionLabel(Wl, 9.2, 3.95, 'Listening corner', 5);
   PLAYLISTS.forEach((p, i) => {
     const sl = canvasTex(512, 512, (g,w,h)=>{ const s = g.createLinearGradient(0,0,w,h); s.addColorStop(0,p.c[0]); s.addColorStop(1,p.c[1]); g.fillStyle=s; g.fillRect(0,0,w,h);
       g.globalAlpha=.25; g.strokeStyle='#fff'; g.lineWidth=3;
@@ -682,148 +760,303 @@ const PLAYLISTS = [
       if (i===2) for (let k=0;k<7;k++){ g.beginPath(); g.moveTo(k*80,0); g.quadraticCurveTo(k*80+40,h*.5,k*80,h); g.stroke(); }
       g.globalAlpha=1; g.fillStyle='#fff'; g.font='600 64px Fraunces, Georgia, serif'; g.fillText(p.name, 34, h-60);
       g.font='600 20px "JetBrains Mono", monospace'; g.fillText('PLAYLIST', 38, h-128); });
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(.78, .78), new THREE.MeshBasicMaterial({ map:sl }));
-    const t = 9.4 + i*1.6; place(m, E, t, 2.3, .03);
-    pictureLight(E, t, 2.3 + .39, .78, .8);
-    addExhibit(m, { center:onWall(E, t, 2.3, .05), normal:E.n.clone(), w:.8, h:.8, room:"screen", dist:2.0, kick:'Playlist', title:p.name, cap:p.desc, action:{ label:'♪ Play it', fn:() => openMusic(p.id) } });
+    const sleeve = new THREE.Group();
+    const sm = new THREE.Mesh(new THREE.BoxGeometry(.78, .78, .012), [paperMat,paperMat,paperMat,paperMat,new THREE.MeshBasicMaterial({ map:sl }),paperMat]); sleeve.add(sm);
+    const rec = new THREE.Mesh(new THREE.CircleGeometry(.36, 40), new THREE.MeshStandardMaterial({ color:0x0b0b0b, roughness:.3 })); rec.position.set(.2, 0, -.004); rec.rotation.y = Math.PI; sleeve.add(rec);
+    const t = 7.9 + i*1.3; place(sleeve, Wl, t, 2.3, .03);
+    pictureLight(Wl, t, 2.3 + .39, .78, .8);
+    addExhibit(sm, { center:onWall(Wl, t, 2.3, .05), normal:Wl.n.clone(), w:.8, h:.8, room:'screen', dist:2.1, kick:'Playlist', title:p.name, cap:p.desc, action:{ label:'♪ Play it', fn:() => openMusic(p.id) } });
   });
+  // record player cabinet under the sleeves
+  const cab = new THREE.Group(); cab.position.copy(onWall(Wl, 9.2, 0, .3)); cab.rotation.y = faceRot(Wl.n); world.add(cab);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.7, .78, .5), woodMat); body.position.y = .39; cab.add(body);
+  for (const sx of [-.42, .42]){ const door = new THREE.Mesh(new THREE.BoxGeometry(.8, .6, .01), new THREE.MeshStandardMaterial({ color:0x5a381e, roughness:.55 })); door.position.set(sx, .4, .255); cab.add(door);
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(.015, 12, 8), brassMat); knob.position.set(sx + (sx < 0 ? .34 : -.34), .4, .27); cab.add(knob); }
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(.56, .09, .42), new THREE.MeshStandardMaterial({ color:0x2a1c12, roughness:.4 })); deck.position.set(-.3, .825, 0); cab.add(deck);
+  platter = new THREE.Group(); platter.position.set(-.33, .88, 0); cab.add(platter);
+  const vinyl = new THREE.Mesh(new THREE.CylinderGeometry(.17, .17, .008, 48), new THREE.MeshStandardMaterial({ color:0x0b0b0b, roughness:.25 })); platter.add(vinyl);
+  const label = new THREE.Mesh(new THREE.CylinderGeometry(.055, .055, .01, 32), new THREE.MeshStandardMaterial({ color:0xE8B44A })); platter.add(label);
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(.012, .012, .26), brassMat); arm.position.set(-.11, .9, .05); arm.rotation.y = .5; cab.add(arm);
+  const spk = (x) => { const s = new THREE.Mesh(new THREE.BoxGeometry(.24, .34, .2), darkMat); s.position.set(x, .95, 0); cab.add(s);
+    const cone = new THREE.Mesh(new THREE.CircleGeometry(.07, 24), new THREE.MeshStandardMaterial({ color:0x333333, roughness:.8 })); cone.position.set(x, .98, .101); cab.add(cone); };
+  spk(.35); spk(.7);
+  const cp = onWall(Wl, 9.2, 0, .55); OBST.push({ x:cp.x, z:cp.z, r:.95 });
+  addExhibit(cab, { center:onWall(Wl, 9.2, .9, .3), normal:Wl.n.clone(), w:1.7, h:.9, room:'screen', dist:2.4, kick:'Listening corner', title:'Play my playlists', cap:'Three playlists: INTENSE, Yez, and Weird and Cool. Hit play and keep walking; the music follows you.', action:{ label:'Open the playlists', fn:() => openMusic() } });
+  panel(Wl, 12.3, 2.3, 2.4, 1.9, { kicker:'On repeat', title:'Music', body:MUSIC_TEXT });
+  // north wall, between the doors: the marquee
+  const mq = canvasTex(1600, 600, (g,w,h)=>{
+    g.fillStyle='#120a0a'; g.fillRect(0,0,w,h); g.strokeStyle='#E8B44A'; g.lineWidth=10; g.strokeRect(30,30,w-60,h-60);
+    for (let x=50;x<w-40;x+=48){ for (const y of [50, h-50]){ g.fillStyle='#ffe6a8'; g.beginPath(); g.arc(x,y,9,0,7); g.fill(); } }
+    for (let y=98;y<h-80;y+=48){ for (const x of [50, w-50]){ g.fillStyle='#ffe6a8'; g.beginPath(); g.arc(x,y,9,0,7); g.fill(); } }
+    g.textAlign='center'; g.fillStyle='#E8B44A'; g.font='600 40px "JetBrains Mono", monospace'; g.fillText('NOW SHOWING IN MY HEAD', w/2, 140);
+    g.fillStyle='#fff6e0'; g.font='600 70px Fraunces, Georgia, serif';
+    ['LA LA LAND · 10TH ANNIVERSARY','SPIDER-MAN · OPENING NIGHT','HAMILTON','GUTS WORLD TOUR'].forEach((s,i) => g.fillText(s, w/2, 240 + i*86)); });
+  const mm = new THREE.Mesh(new THREE.PlaneGeometry(4.8, 1.8), new THREE.MeshBasicMaterial({ map:mq, toneMapped:false })); place(mm, N, 12, 2.9, .04);
+  const mframe = new THREE.Mesh(new THREE.BoxGeometry(4.95, 1.95, .06), darkMat); place(mframe, N, 12, 2.9, .01);
+  addExhibit(mm, { center:onWall(N, 12, 2.9, .1), normal:N.n.clone(), w:4.8, h:1.8, room:'screen', kick:'Screen & stage', title:'Now showing', cap:'Everything in this room, on one sign.' });
+  // east wall, by the Me door: a popcorn cart
+  const pc = new THREE.Group(); pc.position.copy(onWall(E, 3.4, 0, .55)); pc.rotation.y = faceRot(E.n); world.add(pc);
+  const red = new THREE.MeshStandardMaterial({ color:0xb3202f, roughness:.45 });
+  const base = new THREE.Mesh(new THREE.BoxGeometry(.8, .7, .5), red); base.position.y = .45; pc.add(base);
+  for (const sx of [-.32,.32]){ const wh = new THREE.Mesh(new THREE.TorusGeometry(.09, .02, 8, 24), darkMat); wh.position.set(sx, .1, .26); pc.add(wh); }
+  const glass = new THREE.Mesh(new THREE.BoxGeometry(.72, .6, .44), glassMat); glass.position.y = 1.1; pc.add(glass);
+  const kern = seeds(260, .3, .82, new THREE.MeshStandardMaterial({ color:0xf3e2a6, roughness:.9 }), [.018,.016,.018], .14); pc.add(kern);
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(.84, .08, .54), red); roof.position.y = 1.44; pc.add(roof);
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(.7, .16), new THREE.MeshBasicMaterial({ map:canvasTex(512, 116, (g,w,h)=>{ g.fillStyle='#ffe6a8'; g.fillRect(0,0,w,h); g.fillStyle='#b3202f'; g.textAlign='center'; g.font='700 70px Fraunces, Georgia, serif'; g.fillText('POPCORN', w/2, 84); }) }));
+  sign.position.set(0, 1.58, .2); pc.add(sign);
+  const pp = onWall(E, 3.4, 0, .55); OBST.push({ x:pp.x, z:pp.z, r:.6 });
+  // two rows of cinema seats in the middle, facing the stage
+  const seatMat = new THREE.MeshStandardMaterial({ color:0x7a1622, roughness:.8 });
+  for (const [rz, n] of [[28.2, 4], [30.0, 4]]) for (let i=0;i<n;i++){ const x = -14.6 + i*.75; const s = new THREE.Group(); s.position.set(x, 0, rz); world.add(s);
+    const cush = new THREE.Mesh(new THREE.BoxGeometry(.58, .14, .5), seatMat); cush.position.y = .45; s.add(cush);
+    const back = new THREE.Mesh(new THREE.BoxGeometry(.58, .62, .1), seatMat); back.position.set(0, .82, -.25); back.rotation.x = -.12; s.add(back);
+    for (const ax of [-.32,.32]){ const arm = new THREE.Mesh(new THREE.BoxGeometry(.06, .6, .5), darkMat); arm.position.set(ax, .3, -.02); s.add(arm); } }
+  OBST.push({ x:-13.5, z:28.2, r:1.6 }, { x:-13.5, z:30.0, r:1.6 });
 }
 
-/* ---------- Play: the game shelf and the tabletop ---------- */
+/* =========================================================
+   ROOM 4 · PLAY: the game shelf and the tabletop
+   ========================================================= */
 const GAMES = [
-  { t:"Marvel’s Spider-Man", y:'PS4 · 2018', n:'My favorite. I’ve 100%’d it eight times. Yes, eight.', c:['#c81d32','#1b2a6b'] },
-  { t:'Celeste', y:'2018', n:'100%. One of the best games I’ve played, and the hardest to put down.', c:['#e8678f','#3b2a78'] },
-  { t:'Hollow Knight', y:'2017', n:'100% too. No secret left behind.', c:['#2b3a55','#0b0f1c'] },
-  { t:'Fortnite', y:'2017', n:'I always try to finish every challenge.', c:['#4a6cf7','#a238ff'] },
-  { t:'Minecraft', y:'2011', n:'I’ve played it forever. Now I’m making my own shader pack for it, Vivid Visuals (it’s in Projects).', c:['#5aa043','#6b4a2b'] },
-  { t:'Portal', y:'2007', n:'A favorite puzzle game. Short, clever, and very funny.', c:['#e0e4ea','#ff8a1f'] },
-  { t:'Super Mario Galaxy', y:'Wii · 2007', n:'The 3D Mario where my 100% habit started. Space, again.', c:['#2a2f8f','#f5c542'] },
-  { t:'Super Mario Odyssey', y:'Switch · 2017', n:'Another 3D Mario on the 100% streak.', c:['#d6322f','#f0b429'] },
+  { t:"Marvel’s Spider-Man", y:'PS4 · 2018', p:'PS4', n:'My favorite. I’ve 100%’d it eight times. Yes, eight.', c:['#c81d32','#1b2a6b'] },
+  { t:'Celeste', y:'2018', p:'', n:'100%. One of the best games I’ve played, and the hardest to put down.', c:['#e8678f','#3b2a78'] },
+  { t:'Hollow Knight', y:'2017', p:'', n:'100% too. No secret left behind.', c:['#2b3a55','#0b0f1c'] },
+  { t:'Fortnite', y:'2017', p:'', n:'I always try to finish every challenge.', c:['#4a6cf7','#a238ff'] },
+  { t:'Minecraft', y:'2011', p:'', n:'I’ve played it forever. Now I’m making my own shader pack for it, Vivid Visuals (it’s in Projects).', c:['#5aa043','#6b4a2b'] },
+  { t:'Portal', y:'2007', p:'', n:'A favorite puzzle game. Short, clever, and very funny.', c:['#e0e4ea','#ff8a1f'] },
+  { t:'Super Mario Galaxy', y:'Wii · 2007', p:'Wii', n:'The 3D Mario where my 100% habit started. Space, again.', c:['#2a2f8f','#f5c542'] },
+  { t:'Super Mario Odyssey', y:'Switch · 2017', p:'Switch', n:'Another 3D Mario on the 100% streak.', c:['#d6322f','#f0b429'] },
 ];
+// cover art for each case (designed here: title type, colors and a pattern, not the real box art)
+function drawCover(g, G, w, h){
+  const s = g.createLinearGradient(0,0,w*.4,h); s.addColorStop(0,G.c[0]); s.addColorStop(1,G.c[1]); g.fillStyle=s; g.fillRect(0,0,w,h);
+  const seed = G.t.length; g.globalAlpha=.16; g.strokeStyle='#fff'; g.lineWidth=w*.012;
+  for (let i=0;i<10;i++){ g.beginPath(); g.arc(w*((seed*37+i*53)%100)/100, h*((seed*11+i*29)%100)/100, w*(.08+(i%4)*.07), 0, 7); g.stroke(); }
+  g.globalAlpha=1;
+  g.fillStyle='rgba(0,0,0,.55)'; g.fillRect(0,0,w,h*.075); g.fillStyle='#fff'; g.font=`700 ${h*.04}px "Bricolage Grotesque", sans-serif`; g.fillText(G.p ? G.p.toUpperCase() : 'GAME', w*.06, h*.052);
+  g.textAlign='right'; g.fillStyle='#E8B44A'; g.fillText('100%', w*.94, h*.052); g.textAlign='left';
+  g.fillStyle='rgba(0,0,0,.35)'; g.fillRect(0,h*.62,w,h*.38);
+  g.fillStyle='#fff'; g.shadowColor='rgba(0,0,0,.6)'; g.shadowBlur=w*.04; g.font=`600 ${w*.13}px Fraunces, Georgia, serif`;
+  wrap(g, G.t, w*.07, h*.74, w*.86, w*.14); g.shadowBlur=0;
+  g.fillStyle='rgba(255,255,255,.8)'; g.font=`600 ${w*.045}px "JetBrains Mono", monospace`; g.fillText(G.y.toUpperCase(), w*.07, h*.95);
+}
+const coverTex = GAMES.map(G => canvasTex(270, 340, (g,w,h)=>drawCover(g,G,w,h)));
+const coverURL = coverTex.map(t => t.userData.cv.toDataURL('image/jpeg', .85));
+function gameCase(gi){
+  const G = GAMES[gi], g = new THREE.Group(), w = .135, h = .17, d = .015;
+  const spine = canvasTex(40, 340, (c,cw,ch)=>{ const s = c.createLinearGradient(0,0,0,ch); s.addColorStop(0,G.c[0]); s.addColorStop(1,G.c[1]); c.fillStyle=s; c.fillRect(0,0,cw,ch);
+    c.fillStyle='rgba(0,0,0,.5)'; c.fillRect(0,0,cw,26); c.save(); c.translate(cw/2+7, 34); c.rotate(Math.PI/2); c.fillStyle='#fff'; c.font='600 20px Fraunces, Georgia, serif'; c.fillText(G.t, 0, 0); c.restore(); });
+  const plastic = new THREE.MeshStandardMaterial({ color:0x15161a, roughness:.4 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), [plastic, new THREE.MeshStandardMaterial({ map:spine }), plastic, plastic, new THREE.MeshStandardMaterial({ map:coverTex[gi], roughness:.45 }), plastic]);
+  g.add(body);
+  const shell = new THREE.Mesh(new THREE.BoxGeometry(w+.004, h+.004, d+.003), new THREE.MeshPhysicalMaterial({ color:0xffffff, roughness:.08, transparent:true, opacity:.12, clearcoat:1 })); g.add(shell);
+  return { g, body };
+}
 let selGame = 0, tvTex;
+const coverImgs = coverTex.map(t => t.userData.cv);
 function drawTV(){
   const g = tvTex.userData.cv.getContext('2d'), w = 1280, h = 720;
   const G = GAMES[selGame];
   const bg = g.createLinearGradient(0,0,w,h); bg.addColorStop(0, G.c[1]); bg.addColorStop(1, '#05070f'); g.fillStyle = bg; g.fillRect(0,0,w,h);
-  g.fillStyle='rgba(255,255,255,.08)'; for (let i=0;i<w;i+=4) g.fillRect(i,0,1,h);
-  g.fillStyle='#fff'; g.font='600 30px "JetBrains Mono", monospace'; g.fillText('THE GAME SHELF', 60, 70);
-  g.textAlign='right'; g.fillText(String(GAMES.length)+' GAMES', w-60, 70); g.textAlign='left';
-  const tw = 128, th = 170, gap = 18, x0 = (w - (GAMES.length*tw + (GAMES.length-1)*gap))/2;
-  GAMES.forEach((q, i) => { const x = x0 + i*(tw+gap), y = i === selGame ? 120 : 136, s = g.createLinearGradient(x,y,x+tw,y+th);
-    s.addColorStop(0,q.c[0]); s.addColorStop(1,q.c[1]); g.fillStyle = s; g.beginPath(); g.roundRect(x, y, tw, th, 14); g.fill();
-    if (i === selGame){ g.strokeStyle='#E8B44A'; g.lineWidth=6; g.stroke(); }
-    g.fillStyle='#fff'; g.font='600 18px Fraunces, Georgia, serif'; wrap(g, q.t, x+12, y+th-40, tw-20, 20); });
-  g.fillStyle='#fff'; g.font='600 76px Fraunces, Georgia, serif'; g.fillText(G.t, 60, 420);
-  g.fillStyle='#ffe2a8'; g.font='600 26px "JetBrains Mono", monospace'; g.fillText(G.y.toUpperCase(), 64, 466);
-  g.fillStyle='#dfe4f2'; g.font='400 32px "Bricolage Grotesque", sans-serif'; wrap(g, G.n, 64, 530, 900, 42);
-  g.fillStyle='#E8B44A'; g.beginPath(); g.roundRect(w-330, h-120, 270, 64, 32); g.fill();
-  g.fillStyle='#0D1938'; g.font='600 30px "Bricolage Grotesque", sans-serif'; g.fillText('▶  Click to play', w-300, h-78);
+  g.globalAlpha = .25; g.drawImage(coverImgs[selGame], w*.45, -h*.1, w*.7, w*.7*340/270); g.globalAlpha = 1;
+  const fade = g.createLinearGradient(0,0,w*.75,0); fade.addColorStop(0,'rgba(5,7,15,.95)'); fade.addColorStop(1,'rgba(5,7,15,0)'); g.fillStyle = fade; g.fillRect(0,0,w,h);
+  g.fillStyle='#fff'; g.font='600 28px "JetBrains Mono", monospace'; g.fillText('THE GAME SHELF', 60, 64);
+  g.textAlign='right'; g.fillText(String(GAMES.length)+' GAMES · ALL 100%', w-60, 64); g.textAlign='left';
+  const tw = 120, th = 151, gap = 16, x0 = 60;
+  GAMES.forEach((q, i) => { const x = x0 + i*(tw+gap), y = i === selGame ? 98 : 112, sw = i === selGame ? tw*1.08 : tw, sh = sw*340/270;
+    g.save(); g.beginPath(); g.roundRect(x, y, sw, sh, 10); g.clip(); g.drawImage(coverImgs[i], x, y, sw, sh); g.restore();
+    if (i === selGame){ g.strokeStyle='#E8B44A'; g.lineWidth=6; g.beginPath(); g.roundRect(x, y, sw, sh, 10); g.stroke(); } });
+  g.fillStyle='#fff'; g.font='600 72px Fraunces, Georgia, serif'; g.fillText(G.t, 60, 400);
+  g.fillStyle='#ffe2a8'; g.font='600 26px "JetBrains Mono", monospace'; g.fillText(G.y.toUpperCase(), 64, 446);
+  g.fillStyle='#dfe4f2'; g.font='400 32px "Bricolage Grotesque", sans-serif'; wrap(g, G.n, 64, 510, 820, 42);
+  g.fillStyle='#E8B44A'; g.beginPath(); g.roundRect(60, h-110, 270, 62, 31); g.fill();
+  g.fillStyle='#0D1938'; g.font='600 30px "Bricolage Grotesque", sans-serif'; g.fillText('▶  Click to play', 92, h-68);
   tvTex.needsUpdate = true;
 }
 {
-  const E = wf('play','E'), N = wf('play','N'), S = wf('play','S');
-  infoStand('play', doorOf('me','play'), 1, { kicker:'Me · Room 4', title:'Play', body:'The games I 100%, and the table where we play everything else.' });
-  // TV + console cabinet + shelves (east wall, centred on z = 28)
-  tvTex = canvasTex(1280, 720, ()=>{}); drawTV();
-  const tw = 2.9, th = tw*9/16;
-  const tv = new THREE.Group(); const bezel = new THREE.Mesh(new THREE.BoxGeometry(tw+.08, th+.08, .07), darkMat); bezel.position.z = -.02; tv.add(bezel);
-  const scr = new THREE.Mesh(new THREE.PlaneGeometry(tw, th), new THREE.MeshBasicMaterial({ map:tvTex, toneMapped:false })); scr.position.z = .016; tv.add(scr);
-  place(tv, E, 7, 2.15, .08);
-  const cab = new THREE.Mesh(new THREE.BoxGeometry(.55, .55, 3.2), woodMat); cab.position.copy(onWall(E, 7, .275, .3)); world.add(cab); blockers.push(cab);
-  const con = new THREE.Mesh(new THREE.BoxGeometry(.32, .08, .42), darkMat); con.position.copy(onWall(E, 7.6, .59, .3)); world.add(con);
-  const led = new THREE.Mesh(new THREE.BoxGeometry(.005, .012, .12), new THREE.MeshBasicMaterial({ color:0x60a0ff })); led.position.copy(onWall(E, 7.6, .59, .465)); world.add(led);
-  for (const s of [-1, 1]){ const pad = new THREE.Mesh(new THREE.BoxGeometry(.1, .04, .16), darkMat); pad.position.copy(onWall(E, 6.3 + s*.25, .58, .25)); pad.rotation.y = s*.3; world.add(pad); }
-  OBST.push({ x:19.4, z:26.8, r:.6 }, { x:19.4, z:28, r:.6 }, { x:19.4, z:29.2, r:.6 });
+  const E = wf('play','E'), N = wf('play','N'), S = wf('play','S'), Wl = wf('play','W');
+  infoStand('play', doorOf('me','play'), 1, { kicker:'Me · Room 4', title:'Play', body:'The games I 100%, and the table where we play everything else.' }, 2.4);
   const openG = { label:'▶ Open the game menu', fn:() => openGames() };
-  addExhibit(scr, { center:onWall(E, 7, 2.15, .1), normal:E.n.clone(), w:tw, h:th, room:'play', kick:'The game shelf', title:'Pick a game', cap:'Click to open the menu. Every game here is one I’ve sunk way too many hours into.', action:openG, onVisit:() => openGames() });
-  // shelves either side with game cases
+  // east wall (straight ahead from the Screen & stage door): TV, console, shelves
+  tvTex = canvasTex(1280, 720, ()=>{}); drawTV();
+  const tw = 3.0, th = tw*9/16;
+  const tv = new THREE.Group(); const bezel = new THREE.Mesh(new THREE.BoxGeometry(tw+.06, th+.06, .05), darkMat); bezel.position.z = -.01; tv.add(bezel);
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(tw, th), new THREE.MeshBasicMaterial({ map:tvTex, toneMapped:false })); scr.position.z = .016; tv.add(scr);
+  const led = new THREE.Mesh(new THREE.PlaneGeometry(.03, .008), new THREE.MeshBasicMaterial({ color:0xff4040 })); led.position.set(tw/2 - .1, -th/2 - .015, .016); tv.add(led);
+  place(tv, E, 7, 2.1, .06);
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(tw + 1.4, th + 1.2), new THREE.MeshBasicMaterial({ color:0x5a7cff, transparent:true, opacity:.08, depthWrite:false, blending:THREE.AdditiveBlending })); place(glow, E, 7, 2.1, .02);
+  // TV cabinet with doors, a console and two controllers
+  const cab = new THREE.Group(); place(cab, E, 7, 0, .3);
+  const cb = new THREE.Mesh(new THREE.BoxGeometry(2.6, .5, .5), woodMat); cb.position.y = .25; cab.add(cb); blockers.push(cb);
+  for (const sx of [-.86, 0, .86]){ const d = new THREE.Mesh(new THREE.BoxGeometry(.82, .38, .01), new THREE.MeshStandardMaterial({ color:0x5a381e, roughness:.55 })); d.position.set(sx, .26, .255); cab.add(d);
+    const h = new THREE.Mesh(new THREE.BoxGeometry(.16, .015, .015), brassMat); h.position.set(sx, .38, .265); cab.add(h); }
+  const con = new THREE.Mesh(new THREE.BoxGeometry(.4, .07, .3), new THREE.MeshStandardMaterial({ color:0x111216, roughness:.3, metalness:.3 })); con.position.set(.7, .535, -.02); con.rotation.y = .05; cab.add(con);
+  const conLed = new THREE.Mesh(new THREE.BoxGeometry(.3, .004, .004), new THREE.MeshBasicMaterial({ color:0x60a0ff })); conLed.position.set(.7, .54, .135); cab.add(conLed);
+  const pad = (x, ry) => { const p = new THREE.Group(); p.position.set(x, .52, .08); p.rotation.y = ry; cab.add(p);
+    const b = new THREE.Mesh(new THREE.BoxGeometry(.13, .03, .06), darkMat); p.add(b);
+    for (const s of [-1,1]){ const grip = new THREE.Mesh(new THREE.CylinderGeometry(.022, .018, .07, 12), darkMat); grip.rotation.x = Math.PI/2; grip.position.set(s*.055, -.002, .035); p.add(grip);
+      const st = new THREE.Mesh(new THREE.CylinderGeometry(.009, .009, .012, 12), new THREE.MeshStandardMaterial({ color:0x333333 })); st.position.set(s*.025, .02, .01); p.add(st); }
+    const bt = new THREE.Mesh(new THREE.SphereGeometry(.006, 8, 6), new THREE.MeshStandardMaterial({ color:0xe0455a })); bt.position.set(.045, .018, -.012); p.add(bt); };
+  pad(-.4, .3); pad(-.1, -.2);
+  OBST.push({ x:19.4, z:26.8, r:.6 }, { x:19.4, z:28, r:.6 }, { x:19.4, z:29.2, r:.6 });
+  addExhibit(scr, { center:onWall(E, 7, 2.1, .1), normal:E.n.clone(), w:tw, h:th, room:'play', kick:'The game shelf', title:'Pick a game', cap:'Click to open the menu. Every game here is one I’ve 100%’d or sunk way too many hours into.', action:openG, onVisit:() => openGames() });
+  // a rug and a beanbag in front of the TV
+  const rug = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.4), new THREE.MeshStandardMaterial({ roughness:1, map:canvasTex(512, 384, (g,w,h)=>{ g.fillStyle='#24305e'; g.fillRect(0,0,w,h);
+    g.strokeStyle='#E8B44A'; g.lineWidth=8; g.strokeRect(20,20,w-40,h-40); g.lineWidth=3; g.strokeRect(40,40,w-80,h-80);
+    g.fillStyle='rgba(232,180,74,.5)'; for (let i=0;i<5;i++){ g.beginPath(); g.arc(w/2, h/2, 30 + i*24, 0, 7); g.lineWidth=2; g.strokeStyle='rgba(232,180,74,.35)'; g.stroke(); } }) }));
+  rug.rotation.x = -Math.PI/2; rug.rotation.z = Math.PI/2; rug.position.set(17.4, .006, 28); world.add(rug);
+  const bean = new THREE.Mesh(new THREE.SphereGeometry(.45, 24, 16), new THREE.MeshStandardMaterial({ color:0xc8402e, roughness:.9 })); bean.scale.set(1, .6, 1); bean.position.set(16.8, .27, 26.3); world.add(bean);
+  OBST.push({ x:16.8, z:26.3, r:.5 });
+  // two bookcases with the games face-out, like a store shelf
   const shelfAt = (t, games) => {
     const sh = new THREE.Group(); place(sh, E, t, 0, .2);
-    const side = (x) => { const m = new THREE.Mesh(new THREE.BoxGeometry(.04, 2.2, .36), woodMat); m.position.set(x, 1.1, 0); sh.add(m); };
-    side(-.62); side(.62);
-    for (const y of [.05, .75, 1.45, 2.18]){ const m = new THREE.Mesh(new THREE.BoxGeometry(1.28, .04, .36), woodMat); m.position.set(0, y, 0); sh.add(m); }
-    games.forEach((gi, k) => { const G = GAMES[gi]; const shelf = k < 2 ? 1 : 0;
-      const sp = canvasTex(64, 512, (g,w,h)=>{ const s = g.createLinearGradient(0,0,0,h); s.addColorStop(0,G.c[0]); s.addColorStop(1,G.c[1]); g.fillStyle=s; g.fillRect(0,0,w,h);
-        g.save(); g.translate(w/2+10, 24); g.rotate(Math.PI/2); g.fillStyle='#fff'; g.font='600 30px Fraunces, Georgia, serif'; g.fillText(G.t, 0, 0); g.restore(); });
-      const cs = new THREE.Mesh(new THREE.BoxGeometry(.03, .19, .14), [new THREE.MeshStandardMaterial({ color:G.c[1] }), new THREE.MeshStandardMaterial({ color:G.c[1] }), new THREE.MeshStandardMaterial({ color:G.c[1] }), new THREE.MeshStandardMaterial({ color:G.c[1] }), new THREE.MeshBasicMaterial({ map:sp }), new THREE.MeshStandardMaterial({ color:G.c[1] })]);
-      cs.rotation.y = Math.PI/2; cs.position.set(-.45 + (k%2)*.05 + Math.floor(k/2)*0 + (k%2)*.0, .77 + .095 + shelf*0, .05);
-      cs.position.set(-.5 + (k % 2)*.035 + (shelf ? 0 : .5), (shelf ? 1.47 : .77) + .095, .05);
-      sh.add(cs); addExhibit(cs, { center:onWall(E, t, 1.2, .3), normal:E.n.clone(), w:1.3, h:2.2, room:'play', dist:2.2, kick:'The game shelf', title:G.t, cap:G.n, action:openG, onVisit:() => { selGame = gi; drawTV(); } });
-    });
-    // a few decorative cases so the shelves aren't empty
-    for (let k=0;k<10;k++){ const c = new THREE.Mesh(new THREE.BoxGeometry(.03, .19, .14), new THREE.MeshStandardMaterial({ color:[0x24305e,0x5a2330,0x234d3a,0x3a3a3a][k%4] })); c.position.set(-.1 + k*.04, 2.2 + .095 - (k>5 ? 1.43 : 0), .05); if (k>5) c.position.y = .07 + .095; c.position.x = k>5 ? .1 + (k-6)*.04 : c.position.x; sh.add(c); }
-    OBST.push({ x:19.6, z:21 + t, r:.7 });
+    const back = new THREE.Mesh(new THREE.BoxGeometry(1.3, 2.2, .02), new THREE.MeshStandardMaterial({ color:0x4a2e18, roughness:.7 })); back.position.set(0, 1.1, -.17); sh.add(back);
+    for (const x of [-.64, .64]){ const m = new THREE.Mesh(new THREE.BoxGeometry(.04, 2.2, .36), woodMat); m.position.set(x, 1.1, 0); sh.add(m); }
+    const levels = [.06, .74, 1.42, 2.18];
+    for (const y of levels){ const m = new THREE.Mesh(new THREE.BoxGeometry(1.28, .04, .36), woodMat); m.position.set(0, y, 0); sh.add(m);
+      const lip = new THREE.Mesh(new THREE.BoxGeometry(1.28, .02, .01), brassMat); lip.position.set(0, y+.01, .18); sh.add(lip); }
+    // face-out cases: two per shelf on the middle two shelves, leaning back slightly, each on a little stand
+    games.forEach((gi, k) => { const { g, body } = gameCase(gi); const row = k < 2 ? 2 : 1, col = k % 2;
+      g.scale.setScalar(2.55); g.position.set(-.3 + col*.6, levels[row] + .02 + .17*2.55/2, .03); g.rotation.x = -.12; sh.add(g);
+      const stand = new THREE.Mesh(new THREE.BoxGeometry(.2, .02, .08), brassMat); stand.position.set(-.3 + col*.6, levels[row] + .03, .12); sh.add(stand);
+      addExhibit(body, { center:onWall(E, t + (col - .5)*.6, levels[row] + .18, .3), normal:E.n.clone(), w:1.3, h:1.0, room:'play', dist:2.0, kick:'The game shelf', title:GAMES[gi].t, cap:GAMES[gi].n, action:openG, onVisit:() => { selGame = gi; drawTV(); } }); });
+    // bottom shelf: a row of other spines; top: a little trophy and a plant
+    const cols = [0x24305e,0x5a2330,0x234d3a,0x3a3a3a,0x6b4a2b,0x1d1d2a];
+    for (let k=0;k<16;k++){ const c = new THREE.Mesh(new THREE.BoxGeometry(.03, .19 + (k%3)*.01, .14), new THREE.MeshStandardMaterial({ color:cols[k%6], roughness:.5 })); c.position.set(-.56 + k*.034, levels[0] + .02 + .1, 0); sh.add(c); }
+    const cup = new THREE.Group(); cup.position.set(-.35, levels[3] + .02, 0); sh.add(cup);
+    const cupB = new THREE.Mesh(new THREE.CylinderGeometry(.05, .035, .1, 20, 1, true), trimMat); cupB.position.y = .14; cup.add(cupB);
+    const cupS = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, .07, 8), trimMat); cupS.position.y = .06; cup.add(cupS);
+    const cupF = new THREE.Mesh(new THREE.BoxGeometry(.08, .03, .08), darkMat); cupF.position.y = .015; cup.add(cupF);
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(.06, .05, .1, 16), new THREE.MeshStandardMaterial({ color:0xd9cbb3 })); pot.position.set(.35, levels[3] + .07, 0); sh.add(pot);
+    for (let k=0;k<7;k++){ const leaf = new THREE.Mesh(new THREE.SphereGeometry(.05, 10, 8), new THREE.MeshStandardMaterial({ color:0x3f7a3a, roughness:.8 })); leaf.scale.set(.5, 1.4, .25); leaf.position.set(.35 + Math.sin(k)*.04, levels[3] + .17 + (k%3)*.02, Math.cos(k)*.03); leaf.rotation.z = Math.sin(k*2)*.6; sh.add(leaf); }
+    const p = onWall(E, t, 0, .4); OBST.push({ x:p.x, z:p.z, r:.75 });
   };
-  shelfAt(4.3, [0,1,2,3]); shelfAt(9.7, [4,5,6,7]);
-  panel(N, 10.5, 2.3, 3.2, 1.9, { kicker:'Over the board', title:'Game night', body:'The games we play at home, with family and friends. Click anything on the table.' });
+  shelfAt(3.0, [0,1,2,3]); shelfAt(11.0, [4,5,6,7]);
+  // north wall between the doors, and the south wall
+  panel(N, 8, 2.3, 3.2, 1.9, { kicker:'Over the board', title:'Game night', body:'The games we play at home, with family and friends. Click anything on the table.' });
+  panel(S, 6, 2.3, 3.0, 1.9, { kicker:'Completionist', title:'100%, every time', body:'Marvel’s Spider-Man eight times, Hollow Knight, Celeste, and most 3D Marios since Galaxy. If there’s a secret, I’m finding it.' });
+  panel(S, 14, 2.3, 3.0, 1.9, { kicker:'House rules', title:'El mentiroso', body:'Everyone shakes their dice under a cubilete. Each bid has to beat the one before it, or you call the last person a liar. Lie well.' });
 }
 { // the tabletop
-  const tx = 8.6, tz = 28.6, top = .76;
+  const tx = 9.0, tz = 31.0, top = .76;
   const tbl = new THREE.Group(); tbl.position.set(tx, 0, tz); world.add(tbl);
-  const slab = new THREE.Mesh(new THREE.BoxGeometry(4.8, .07, 2.2), woodMat); slab.position.y = top - .035; tbl.add(slab); blockers.push(slab);
-  const felt = new THREE.Mesh(new THREE.BoxGeometry(4.5, .005, 1.9), new THREE.MeshStandardMaterial({ color:0x1d4a37, roughness:1 })); felt.position.y = top + .002; tbl.add(felt);
-  for (const sx of [-2.2, 2.2]) for (const sz of [-.95, .95]){ const leg = new THREE.Mesh(new THREE.BoxGeometry(.08, top, .08), woodMat); leg.position.set(sx, top/2, sz); tbl.add(leg); }
-  for (const sx of [-1.6, 0, 1.6]) for (const sz of [-1.5, 1.5]){ const ch = new THREE.Group(); ch.position.set(sx, 0, sz); ch.rotation.y = sz > 0 ? Math.PI : 0; tbl.add(ch);
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(5.2, .07, 2.4), woodMat); slab.position.y = top - .035; tbl.add(slab); blockers.push(slab);
+  const edge = new THREE.Mesh(new THREE.BoxGeometry(5.24, .02, 2.44), new THREE.MeshStandardMaterial({ color:0x4a2e18 })); edge.position.y = top - .075; tbl.add(edge);
+  const felt = new THREE.Mesh(new THREE.BoxGeometry(4.9, .005, 2.1), new THREE.MeshStandardMaterial({ color:0x1d4a37, roughness:1 })); felt.position.y = top + .002; tbl.add(felt);
+  for (const sx of [-2.4, 2.4]) for (const sz of [-1.05, 1.05]){ const leg = new THREE.Mesh(new THREE.CylinderGeometry(.05, .04, top, 12), woodMat); leg.position.set(sx, top/2, sz); tbl.add(leg); }
+  for (const sx of [-1.7, 0, 1.7]) for (const sz of [-1.62, 1.62]){ const ch = new THREE.Group(); ch.position.set(sx + (sz > 0 ? .1 : -.1), 0, sz); ch.rotation.y = (sz > 0 ? Math.PI : 0) + (rnd()-.5)*.2; tbl.add(ch);
     const seat = new THREE.Mesh(new THREE.BoxGeometry(.48, .05, .45), woodMat); seat.position.y = .46; ch.add(seat);
+    const cushion = new THREE.Mesh(new THREE.BoxGeometry(.42, .04, .4), new THREE.MeshStandardMaterial({ color:0x7a1622, roughness:.9 })); cushion.position.y = .5; ch.add(cushion);
     const back = new THREE.Mesh(new THREE.BoxGeometry(.48, .55, .04), woodMat); back.position.set(0, .74, -.21); ch.add(back);
     for (const lx of [-.2,.2]) for (const lz of [-.18,.18]){ const l = new THREE.Mesh(new THREE.BoxGeometry(.04,.46,.04), woodMat); l.position.set(lx,.23,lz); ch.add(l); } }
-  for (const dx of [-1.7, -.6, .6, 1.7]) OBST.push({ x:tx + dx, z:tz, r:1.25 });
-  const Y = top + .006, add = (o, x, z) => { o.position.set(x, Y, z); tbl.add(o); return o; };
+  for (const dx of [-1.9, -.65, .65, 1.9]) OBST.push({ x:tx + dx, z:tz, r:1.35 });
+  const lamp = new THREE.PointLight(0xffd9a0, 6, 6, 1.6); lamp.position.set(tx, 2.6, tz); world.add(lamp);
+  const shade = new THREE.Mesh(new THREE.ConeGeometry(.45, .3, 32, 1, true), new THREE.MeshStandardMaterial({ color:0x1b3a2a, side:THREE.DoubleSide, roughness:.6 })); shade.position.set(tx, 2.75, tz); world.add(shade);
+  const cord = new THREE.Mesh(new THREE.CylinderGeometry(.006, .006, H - 2.9, 6), darkMat); cord.position.set(tx, 2.9 + (H-2.9)/2, tz); world.add(cord);
+  const Y = top + .006, add = (o, x, z, y=Y) => { o.position.set(x, y, z); tbl.add(o); return o; };
   const item = (o, x, z, title, cap) => addExhibit(o, { center:new THREE.Vector3(tx + x, top + .1, tz + z), normal:new THREE.Vector3(0, 0, -1), w:.9, h:.5, room:'play', dist:2.0, kick:'Over the board', title, cap });
-  const flat = (size, draw) => new THREE.Mesh(new THREE.BoxGeometry(size[0], .012, size[1]), [darkMat, darkMat, new THREE.MeshBasicMaterial({ map:canvasTex(1024, Math.round(1024*size[1]/size[0]), draw), color:0xe6e1d4 }), darkMat, darkMat, darkMat]);
-  // La ruta del tesoro: our family's version of a property-trading board game
+  const flat = (size, draw, thick=.012) => new THREE.Mesh(new THREE.BoxGeometry(size[0], thick, size[1]), [darkMat, darkMat, new THREE.MeshStandardMaterial({ map:canvasTex(1024, Math.round(1024*size[1]/size[0]), draw), roughness:.7 }), darkMat, darkMat, darkMat]);
+  // La ruta del tesoro
   const ruta = flat([.9,.9], (g,w,h)=>{ g.fillStyle='#e9dcc0'; g.fillRect(0,0,w,h); const n = 10, c = w/(n+1.6);
     const cols = ['#c0392b','#2980b9','#27ae60','#f39c12','#8e44ad','#16a085','#d35400','#2c3e50'];
-    for (let i=0;i<4*n;i++){ const side = Math.floor(i/n), k = i%n; let x, y;
-      const big = c*1.3; const pos = big + k*c;
+    for (let i=0;i<4*n;i++){ const side = Math.floor(i/n), k = i%n, big = c*1.3, pos = big + k*c; let x, y;
       if (side===0){ x = pos; y = h-big; } else if (side===1){ x = 0; y = h - big - (k+1)*c; } else if (side===2){ x = w - big - (k+1)*c; y = 0; } else { x = w-big; y = big + k*c; }
       g.fillStyle='#f6eedb'; g.fillRect(x+2, y+2, (side%2? big : c)-4, (side%2? c : big)-4); g.fillStyle=cols[(i>>1)%8]; if (k%3) g.fillRect(x+4, y+4, (side%2? 16 : c-8), (side%2? c-8 : 16)); }
     g.fillStyle='#0D1938'; g.textAlign='center'; g.font='italic 600 64px Fraunces, Georgia, serif'; g.fillText('La ruta', w/2, h/2-20); g.fillText('del tesoro', w/2, h/2+50);
     g.strokeStyle='#8a6a2a'; g.lineWidth=4; g.beginPath(); g.arc(w/2, h/2+150, 50, 0, 7); g.stroke(); g.beginPath(); g.moveTo(w/2, h/2+95); g.lineTo(w/2, h/2+205); g.moveTo(w/2-55, h/2+150); g.lineTo(w/2+55, h/2+150); g.stroke(); });
-  add(ruta, -1.6, -.3);
-  for (const [px, pz, c] of [[-1.85,-.62,0xc0392b],[-1.8,-.05,0x2980b9],[-1.25,-.66,0xf1c40f]]){ const pw = new THREE.Mesh(new THREE.ConeGeometry(.025, .07, 16), new THREE.MeshStandardMaterial({ color:c })); add(pw, px, pz).position.y = Y + .04; }
-  item(ruta, -1.6, -.3, 'La ruta del tesoro', 'Basically Monopoly, but the version my girlfriend’s family has played for about 30 years. Now it’s a family thing, and I’m part of it.');
-  // Catan-style hex island
-  const cat = new THREE.Group(); add(cat, -.35, -.35);
-  const sea = new THREE.Mesh(new THREE.CylinderGeometry(.42, .42, .01, 6), new THREE.MeshStandardMaterial({ color:0x2f6fb0 })); sea.rotation.y = Math.PI/6; sea.position.y = .005; cat.add(sea);
-  const terr = [0x3d7a35,0x9bd16a,0xe6c34a,0xc8663a,0x8c8f96,0xd9c79b]; const order = [0,1,2,3,4,0,1,2,3,0,5,1,2,4,0,1,3,2,4];
+  add(ruta, -1.75, -.25);
+  for (const [px, pz, c] of [[-2.0,-.6,0xc0392b],[-1.95,-.05,0x2980b9],[-1.4,-.62,0xf1c40f],[-1.38,.1,0x27ae60]]){ const pw = new THREE.Group(); const b = new THREE.Mesh(new THREE.ConeGeometry(.022, .06, 16), new THREE.MeshStandardMaterial({ color:c, roughness:.3 })); b.position.y = .03; pw.add(b); const hd = new THREE.Mesh(new THREE.SphereGeometry(.014, 12, 8), b.material); hd.position.y = .065; pw.add(hd); add(pw, px, pz, Y + .006); }
+  const bills = ['#e8d9a0','#a8d3a8','#e7b1b1','#a9c7e8'];
+  bills.forEach((c, i) => { const stack = new THREE.Mesh(new THREE.BoxGeometry(.13, .012, .065), new THREE.MeshStandardMaterial({ color:c, roughness:.95 })); add(stack, -2.15 + (i%2)*.15, .4 + Math.floor(i/2)*.09, Y + .006).rotation.y = (rnd()-.5)*.3; });
+  const rd1 = d6(.028), rd2 = d6(.028); add(rd1, -1.55, -.45, Y + .014); add(rd2, -1.5, -.4, Y + .014);
+  item(ruta, -1.75, -.25, 'La ruta del tesoro', 'Basically Monopoly, but the version my girlfriend’s family has played for about 30 years. Now it’s a family thing, and I’m part of it.');
+  // Catan-style island, with number tokens, roads, settlements and the robber
+  const cat = new THREE.Group(); add(cat, -.5, .35);
+  const sea = new THREE.Mesh(new THREE.CylinderGeometry(.43, .43, .01, 6), new THREE.MeshStandardMaterial({ color:0x2f6fb0, roughness:.6 })); sea.rotation.y = Math.PI/6; sea.position.y = .005; cat.add(sea);
+  const terr = [0x3d7a35,0x9bd16a,0xe6c34a,0xc8663a,0x8c8f96,0xd9c79b]; const order = [0,1,2,3,4,0,1,2,3,0,5,1,2,4,0,1,3,2,4], nums = [5,2,6,3,8,10,9,12,11,0,4,8,10,9,4,5,6,3,11];
   let k = 0; const R = .075;
   for (let q=-2;q<=2;q++) for (let r=-2;r<=2;r++){ const s = -q-r; if (Math.abs(s) > 2) continue;
-    const hx = new THREE.Mesh(new THREE.CylinderGeometry(R*.97, R*.97, .02, 6), new THREE.MeshStandardMaterial({ color:terr[order[k++ % order.length]], roughness:.8 }));
-    hx.position.set(R*1.5*q, .02, R*Math.sqrt(3)*(r + q/2)); cat.add(hx); }
-  item(cat, -.35, -.35, 'Catan', 'Trading wood for sheep, again. Someone always ends up with all the wheat.');
-  // Parchís
+    const t = order[k], x = R*1.5*q, z = R*Math.sqrt(3)*(r + q/2);
+    const hx = new THREE.Mesh(new THREE.CylinderGeometry(R*.97, R*.97, .02, 6), new THREE.MeshStandardMaterial({ color:terr[t], roughness:.8 })); hx.position.set(x, .02, z); cat.add(hx);
+    if (nums[k]){ const tok = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, .004, 20), [new THREE.MeshStandardMaterial({ color:0xefe2c2 }), new THREE.MeshStandardMaterial({ map:numberTex(nums[k], { fg: nums[k]===6||nums[k]===8 ? '#b3202f' : '#1b1b1b' }) }), new THREE.MeshStandardMaterial({ color:0xefe2c2 })]); tok.position.set(x, .032, z); cat.add(tok); }
+    else { const rob = new THREE.Mesh(new THREE.CapsuleGeometry(.012, .03, 4, 8), new THREE.MeshStandardMaterial({ color:0x222222 })); rob.position.set(x, .055, z); cat.add(rob); }
+    k++; }
+  const pc = [0xc0392b, 0x2f6fd6, 0xf0f0f0];
+  [[.11,-.06,0],[ -.08,.12,1],[.02,-.16,2],[-.15,-.04,0],[.16,.1,1]].forEach(([x,z,c], i) => { const road = new THREE.Mesh(new THREE.BoxGeometry(.06, .012, .012), new THREE.MeshStandardMaterial({ color:pc[c] })); road.position.set(x, .036, z); road.rotation.y = i*1.05; cat.add(road);
+    const house = new THREE.Group(); const hb = new THREE.Mesh(new THREE.BoxGeometry(.018,.014,.018), road.material); hb.position.y = .007; house.add(hb); const hr = new THREE.Mesh(new THREE.ConeGeometry(.015,.014,4), road.material); hr.position.y = .021; hr.rotation.y = Math.PI/4; house.add(hr);
+    house.position.set(x + .035, .03, z + .02); cat.add(house); });
+  item(cat, -.5, .35, 'Catan', 'Trading wood for sheep, again. Someone always ends up with all the brick.');
+  // Parchís, with a bowl of pipas and the shells
   const par = flat([.62,.62], (g,w,h)=>{ g.fillStyle='#f4ecd8'; g.fillRect(0,0,w,h); const cs = ['#f2c230','#2f6fd6','#d63a2f','#2f9e4a'], q = w*.37;
     [[0,0],[w-q,0],[w-q,h-q],[0,h-q]].forEach(([x,y],i)=>{ g.fillStyle=cs[i]; g.fillRect(x+6,y+6,q-12,q-12); g.fillStyle='#f4ecd8'; g.beginPath(); g.arc(x+q/2,y+q/2,q*.3,0,7); g.fill(); });
     g.strokeStyle='#333'; g.lineWidth=2; const cw = (w-2*q)/3;
     for (let i=0;i<3;i++) for (let j=0;j<8;j++){ g.strokeRect(q+i*cw, j*q/8, cw, q/8); g.strokeRect(q+i*cw, h-q+j*q/8, cw, q/8); g.strokeRect(j*q/8, q+i*cw, q/8, cw); g.strokeRect(w-q+j*q/8, q+i*cw, q/8, cw); }
     const c = w/2; [[c,c-cw*1.5,c-cw*1.5,q,c+cw*1.5,q],[w-q,c-cw*1.5,w-q,c+cw*1.5,c,c],[c-cw*1.5,h-q,c+cw*1.5,h-q,c,c],[q,c-cw*1.5,q,c+cw*1.5,c,c]].forEach((p,i)=>{ g.fillStyle=cs[[1,2,0,3][i]]; g.beginPath(); g.moveTo(p[0],p[1]); g.lineTo(p[2],p[3]); g.lineTo(p[4],p[5]); g.closePath(); g.fill(); }); });
-  add(par, 1.05, -.35);
-  [[0xf2c230,.86,-.55],[0x2f6fd6,1.25,-.55],[0xd63a2f,1.25,-.15],[0x2f9e4a,.86,-.15]].forEach(([c,x,z]) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(.018,.022,.03,16), new THREE.MeshStandardMaterial({ color:c })); add(p, x, z).position.y = Y + .02; });
-  item(par, 1.05, -.35, 'Parchís', 'Always with my grandparents. They don’t go easy on me.');
-  // Dungeons & Dragons: DM screen, dice and my character sheet
-  const dnd = new THREE.Group(); add(dnd, .2, .5);
-  const scrTex = canvasTex(512, 384, (g,w,h)=>{ g.fillStyle='#5a1420'; g.fillRect(0,0,w,h); g.strokeStyle='#E8B44A'; g.lineWidth=8; g.strokeRect(14,14,w-28,h-28);
-    g.fillStyle='#E8B44A'; g.textAlign='center'; g.font='600 64px Fraunces, Georgia, serif'; g.fillText('DM', w/2, h/2+10); g.font='600 22px "JetBrains Mono", monospace'; g.fillText('NO PEEKING', w/2, h/2+60); });
-  [-1,0,1].forEach(i => { const p = new THREE.Mesh(new THREE.BoxGeometry(.3, .26, .008), [darkMat,darkMat,darkMat,darkMat,new THREE.MeshBasicMaterial({ map:scrTex }),new THREE.MeshStandardMaterial({ color:0x3a0d14 })]);
-    p.position.set(i*.29, .13, i === 0 ? .18 : .12); p.rotation.y = -i*.35; p.rotation.y += Math.PI; dnd.add(p); });
-  const dm = new THREE.MeshStandardMaterial({ color:0x7d3cff, roughness:.25, metalness:.1 });
-  [[new THREE.IcosahedronGeometry(.032),-.2,-.12],[new THREE.DodecahedronGeometry(.026),-.08,-.18],[new THREE.OctahedronGeometry(.024),.05,-.12],[new THREE.BoxGeometry(.035,.035,.035),.16,-.17],[new THREE.TetrahedronGeometry(.028),.27,-.1]]
-    .forEach(([geo,x,z]) => { const d = new THREE.Mesh(geo, dm); d.position.set(x, .03, z); d.rotation.set(rnd()*3, rnd()*3, rnd()*3); dnd.add(d); });
+  add(par, 1.85, -.3);
+  [[0xf2c230,1.66,-.5],[0x2f6fd6,2.04,-.5],[0xd63a2f,2.04,-.1],[0x2f9e4a,1.66,-.1],[0xd63a2f,1.92,-.36]].forEach(([c,x,z]) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(.016,.02,.026,16), new THREE.MeshStandardMaterial({ color:c, roughness:.3 })); add(p, x, z, Y + .019); });
+  add(d6(.026), 1.5, .05, Y + .013);
+  const pb = bowl(.085); add(pb, 1.95, .38, Y); const ps = seeds(70, .055, Y + .02, seedMat, [.006,.0035,.012], .03); ps.position.set(tx + 1.95 - tx, 0, .38); tbl.add(ps);
+  const shells = seeds(45, .12, Y + .002, shellMat, [.006,.0012,.011]); shells.position.set(1.62, 0, .45); tbl.add(shells);
+  item(par, 1.85, -.3, 'Parchís', 'Always with my grandparents, with a bowl of pipas in the middle. They don’t go easy on me.');
+  addExhibit(pb, { center:new THREE.Vector3(tx + 1.95, top + .05, tz + .38), normal:new THREE.Vector3(0,0,-1), w:.5, h:.3, room:'play', dist:1.8, kick:'Over the board', title:'Pipas', cap:'Non-negotiable at the Parchís table. The shell pile tells you how long the game has been going.' });
+  // Dungeons & Dragons: DM screen (art facing the players), notes and the DM's notebook behind it, numbered dice in front
+  const dnd = new THREE.Group(); add(dnd, .65, .2);
+  const scrArt = canvasTex(512, 400, (g,w,h)=>{ g.fillStyle='#5a1420'; g.fillRect(0,0,w,h); g.strokeStyle='#E8B44A'; g.lineWidth=8; g.strokeRect(14,14,w-28,h-28);
+    g.strokeStyle='rgba(232,180,74,.5)'; g.lineWidth=3; g.beginPath(); g.moveTo(w/2,60); g.lineTo(w/2+70,140); g.lineTo(w/2,220); g.lineTo(w/2-70,140); g.closePath(); g.stroke();
+    g.fillStyle='#E8B44A'; g.textAlign='center'; g.font='600 60px Fraunces, Georgia, serif'; g.fillText('DM', w/2, 162); g.font='600 22px "JetBrains Mono", monospace'; g.fillText('NO PEEKING', w/2, 300); });
+  const scrIn = canvasTex(512, 400, (g,w,h)=>{ g.fillStyle='#efe4cc'; g.fillRect(0,0,w,h); g.fillStyle='#5a1420'; g.fillRect(0,0,w,40); g.fillStyle='#333';
+    for (let r=0;r<12;r++){ g.fillRect(24, 64 + r*27, 180 + (r*53)%200, 6); } });
+  const screenMatOut = new THREE.MeshStandardMaterial({ map:scrArt, roughness:.6 }), screenMatIn = new THREE.MeshStandardMaterial({ map:scrIn, roughness:.8 }), screenEdge = new THREE.MeshStandardMaterial({ color:0x3a0d14 });
+  [-1,0,1].forEach(i => { const p = new THREE.Mesh(new THREE.BoxGeometry(.3, .26, .008), [screenEdge,screenEdge,screenEdge,screenEdge,screenMatIn,screenMatOut]);
+    p.position.set(i*.285, .13, i === 0 ? -.02 : .03); p.rotation.y = i*.35; dnd.add(p); });
+  // the DM's side: a notebook, loose notes and a pencil
+  const book = flat([.22,.29], (g,w,h)=>{ g.fillStyle='#3b2416'; g.fillRect(0,0,w,h); g.strokeStyle='#c9a24a'; g.lineWidth=10; g.strokeRect(30,30,w-60,h-60);
+    g.fillStyle='#e8d6a0'; g.textAlign='center'; g.font='600 92px Fraunces, Georgia, serif'; g.fillText('Campaign', w/2, h*.42); g.fillText('notes', w/2, h*.42 + 110); g.font='italic 52px Fraunces, Georgia, serif'; g.fillText('Valencia', w/2, h*.7); }, .03);
+  book.position.set(-.18, .015, .3); book.rotation.y = .15; dnd.add(book);
+  for (let i=0;i<3;i++){ const note = flat([.15,.2], (g,w,h)=>{ g.fillStyle = i===1 ? '#fff4b8' : '#f7f3e8'; g.fillRect(0,0,w,h); g.fillStyle='#4a4a6a'; for (let r=0;r<11;r++) g.fillRect(70, 110 + r*110, 300 + ((r*97+i*31)%480), 14); }, .002);
+    note.position.set(.15 + i*.1, .002 + i*.002, .32 + (i%2)*.03); note.rotation.y = (rnd()-.5)*.6; dnd.add(note); }
+  const pencil = new THREE.Mesh(new THREE.CylinderGeometry(.004, .004, .17, 8), new THREE.MeshStandardMaterial({ color:0xf0b429 })); pencil.rotation.z = Math.PI/2; pencil.rotation.y = .5; pencil.position.set(.25, .006, .2); dnd.add(pencil);
+  // the players' side: numbered dice and my character sheet
+  const dm = 0x6b2cc9; const dice = [[new THREE.IcosahedronGeometry(.028), -.2, -.2, .028], [new THREE.DodecahedronGeometry(.024), -.09, -.25, .024], [new THREE.OctahedronGeometry(.022), .03, -.2, .022], [new THREE.TetrahedronGeometry(.026), .26, -.18, .026]];
+  for (const [geo, x, z, r] of dice){ const d = polyDie(geo, dm, r); d.position.set(x, .026, z); dnd.add(d); }
+  const dd6 = d6(.03, '#6b2cc9', '#fff4d6'); dd6.position.set(.15, .015, -.25); dnd.add(dd6);
   const sheet = flat([.21,.297], (g,w,h)=>{ g.fillStyle='#f5f1e6'; g.fillRect(0,0,w,h); g.fillStyle='#222'; g.font='600 58px Fraunces, Georgia, serif'; g.fillText('Finnan', 60, 120);
     g.font='italic 40px Fraunces, Georgia, serif'; g.fillText('“Cuentista” Tealeaf', 60, 180); g.font='30px "JetBrains Mono", monospace'; g.fillText('BARD / ROGUE', 60, 240);
-    g.fillStyle='#bbb'; for (let y=300;y<h-60;y+=46) g.fillRect(60, y, w-120, 3); });
-  sheet.position.set(-.45, .0, -.12); sheet.rotation.y = .25; dnd.add(sheet);
-  item(dnd, .2, .5, 'Dungeons & Dragons', 'A campaign with friends in Valencia. I play Finnan “Cuentista” Tealeaf, a bard/rogue. The DM screen is there so nobody sees what’s coming.');
-  // Poker
-  const pk = new THREE.Group(); add(pk, -1.55, .5);
+    const st = ['STR','DEX','CON','INT','WIS','CHA'], vals = [10,16,12,13,11,17];
+    st.forEach((s,i) => { const x = 60 + (i%3)*230, y = 300 + Math.floor(i/3)*170; g.strokeStyle='#444'; g.lineWidth=4; g.strokeRect(x, y, 200, 140); g.font='26px "JetBrains Mono", monospace'; g.fillText(s, x+20, y+40); g.font='600 64px Fraunces, Georgia, serif'; g.fillText(String(vals[i]), x+60, y+115); });
+    g.fillStyle='#bbb'; for (let y=680;y<h-60;y+=46) g.fillRect(60, y, w-120, 3); }, .002);
+  sheet.position.set(-.5, .0, -.32); sheet.rotation.y = .25; dnd.add(sheet);
+  item(dnd, .65, .2, 'Dungeons & Dragons', 'A campaign with friends in Valencia. I play Finnan “Cuentista” Tealeaf, a bard/rogue. The DM screen is there so nobody sees what’s coming.');
+  // Poker, with friends
+  const pk = new THREE.Group(); add(pk, -.75, -.72);
   const chipC = [0xc0392b, 0x1f4fbf, 0x111111, 0xf2f2f2, 0x27ae60];
-  chipC.forEach((c, i) => { for (let n=0;n<4+(i*3)%7;n++){ const ch = new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.0045,24), new THREE.MeshStandardMaterial({ color:c, roughness:.5 })); ch.position.set(-.18 + i*.06, .003 + n*.0048, -.05 + (i%2)*.04); pk.add(ch); } });
+  const chipSide = (c) => canvasTex(128, 16, (g,w,h)=>{ g.fillStyle='#'+c.toString(16).padStart(6,'0'); g.fillRect(0,0,w,h); g.fillStyle = c === 0xf2f2f2 ? '#c0392b' : '#fff'; for (let x=0;x<w;x+=32) g.fillRect(x, 0, 10, h); });
+  chipC.forEach((c, i) => { const side = new THREE.MeshStandardMaterial({ map:chipSide(c), roughness:.4 }), face = new THREE.MeshStandardMaterial({ color:c, roughness:.4 });
+    for (let n=0;n<4+(i*3)%7;n++){ const ch = new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.0045,24), [side, face, face]); ch.position.set(-.2 + i*.055 + (rnd()-.5)*.002, .003 + n*.0048, -.02 + (i%2)*.045); pk.add(ch); } });
   const back = canvasTex(128, 180, (g,w,h)=>{ g.fillStyle='#8f1d2c'; g.fillRect(0,0,w,h); g.strokeStyle='#fff'; g.lineWidth=4; g.strokeRect(8,8,w-16,h-16); for (let i=0;i<10;i++){ g.beginPath(); g.moveTo(8,8+i*18); g.lineTo(w-8,26+i*18); g.stroke(); } });
-  const faceC = (s, c) => canvasTex(128, 180, (g,w,h)=>{ g.fillStyle='#fff'; g.fillRect(0,0,w,h); g.fillStyle=c; g.font='600 46px Georgia, serif'; g.fillText(s, 12, 50); g.font='80px Georgia, serif'; g.textAlign='center'; g.fillText(s.slice(-1), w/2, h/2+34); });
-  [['A♠','#111'],['K♥','#c0392b']].forEach(([s,c], i) => { const card = new THREE.Mesh(new THREE.BoxGeometry(.063,.002,.088), [darkMat,darkMat,new THREE.MeshBasicMaterial({ map:faceC(s,c) }),darkMat,darkMat,darkMat]); card.position.set(.15 + i*.05, .004 + i*.002, .02); card.rotation.y = .2 - i*.3; pk.add(card); });
-  for (let i=0;i<5;i++){ const card = new THREE.Mesh(new THREE.BoxGeometry(.063,.002,.088), [darkMat,darkMat,new THREE.MeshBasicMaterial({ map:back }),darkMat,darkMat,darkMat]); card.position.set(-.16 + i*.075, .002, .14); pk.add(card); }
-  item(pk, -1.55, .5, 'Poker', 'Chips, a deck and a lot of bluffing. Nobody in my family believes my poker face.');
+  const faceC = (s, c) => canvasTex(128, 180, (g,w,h)=>{ g.fillStyle='#fff'; g.fillRect(0,0,w,h); g.fillStyle=c; g.font='600 40px Georgia, serif'; g.fillText(s, 10, 44); g.font='80px Georgia, serif'; g.textAlign='center'; g.fillText(s.slice(-1), w/2, h/2+34); g.save(); g.translate(w-10, h-44); g.rotate(Math.PI); g.font='600 40px Georgia, serif'; g.textAlign='left'; g.fillText(s, 0, 0); g.restore(); });
+  [['A♠','#111'],['A♥','#c0392b']].forEach(([s,c], i) => { const card = new THREE.Mesh(new THREE.BoxGeometry(.063,.002,.088), [paperMat,paperMat,new THREE.MeshBasicMaterial({ map:faceC(s,c) }),paperMat,paperMat,paperMat]); card.position.set(.2 + i*.03, .004 + i*.002, .05); card.rotation.y = .25 - i*.35; pk.add(card); });
+  for (let i=0;i<5;i++){ const s = ['K♣','7♦','A♣','2♠','Q♥'][i], c = s.includes('♦')||s.includes('♥') ? '#c0392b' : '#111';
+    const card = new THREE.Mesh(new THREE.BoxGeometry(.063,.002,.088), [paperMat,paperMat,new THREE.MeshBasicMaterial({ map: i < 3 ? faceC(s,c) : back }),paperMat,paperMat,paperMat]); card.position.set(-.18 + i*.075, .002, .13); pk.add(card); }
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(.063,.025,.088), [paperMat,paperMat,new THREE.MeshBasicMaterial({ map:back }),paperMat,paperMat,paperMat]); deck.position.set(.24, .0125, .14); deck.rotation.y = .1; pk.add(deck);
+  item(pk, -.75, -.72, 'Poker', 'Poker nights with my friends. Chips, a deck and a lot of bluffing. Pocket aces, apparently.');
+  // El mentiroso: two cubiletes and five dice
+  const mt = new THREE.Group(); add(mt, .25, -.72);
+  const leather = new THREE.MeshStandardMaterial({ color:0x5a3a22, roughness:.7, side:THREE.DoubleSide });
+  const cupUp = new THREE.Mesh(new THREE.CylinderGeometry(.05, .042, .11, 28, 1, true), leather); cupUp.position.set(-.12, .055, 0); mt.add(cupUp);
+  const cupBase = new THREE.Mesh(new THREE.CircleGeometry(.042, 28), leather); cupBase.rotation.x = -Math.PI/2; cupBase.position.set(-.12, .002, 0); mt.add(cupBase);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(.05, .004, 8, 28), brassMat); rim.rotation.x = Math.PI/2; rim.position.set(-.12, .11, 0); mt.add(rim);
+  const cupDown = new THREE.Mesh(new THREE.CylinderGeometry(.042, .05, .11, 28), leather); cupDown.position.set(.12, .055, .02); mt.add(cupDown);
+  for (let i=0;i<5;i++){ const d = d6(.026, '#f5f1e8', '#b3202f'); d.position.set(-.04 + (i%3)*.04, .013, .07 + Math.floor(i/3)*.04); mt.add(d); }
+  item(mt, .25, -.72, 'El mentiroso', 'Dice under a cubilete. Each bid has to be higher than the one before, or you call the last person a liar. Whoever’s caught lying loses a die.');
+  // snacks: croissants in a paper bag, drinks
+  const bag = new THREE.Group(); add(bag, -2.1, .62);
+  const paperBag = new THREE.Mesh(new THREE.BoxGeometry(.22, .09, .16), new THREE.MeshStandardMaterial({ color:0xc9a77a, roughness:1 })); paperBag.position.y = .045; paperBag.rotation.y = .3; bag.add(paperBag);
+  const fold = new THREE.Mesh(new THREE.BoxGeometry(.2, .004, .14), new THREE.MeshStandardMaterial({ color:0xb8946a, roughness:1 })); fold.position.y = .092; fold.rotation.y = .3; bag.add(fold);
+  for (const [x,z,r] of [[.02,-.03,.5],[.2,.06,-.4],[-.16,.12,1.3]]){ const c = croissant(); c.position.set(x, x === .02 ? .095 : 0, z); c.rotation.y = r; bag.add(c); }
+  item(bag, -2.1, .62, 'Croissants', 'We always have a bag of croissants when we play anything. Crumbs on the board are part of the game.');
+  add(drinkGlass(0x5a2b12), -1.35, .82); add(drinkGlass(0xf0a830), .15, .9); add(soda(0xb3202f, 'COLA'), 1.25, -.88); add(drinkGlass(0xd7e8f0, .1), 2.3, -.82); add(soda(0x2f6fd6, 'FIZZ'), -2.25, -.8);
+  for (const [x,z] of [[-1.15,.78],[.35,.82]]){ const nap = new THREE.Mesh(new THREE.BoxGeometry(.12, .003, .12), paperMat); add(nap, x, z, Y + .001).rotation.y = rnd(); }
 }
 
 /* =========================================================
@@ -1114,8 +1347,8 @@ addEventListener('keydown', e => { if (e.key === 'Escape') for (const m of docum
 const gameModal = document.getElementById('gameModal'), gWrap = document.getElementById('games');
 const gTitle = document.getElementById('gTitle'), gNote = document.getElementById('gNote');
 GAMES.forEach((G, i) => { const b = document.createElement('button'); b.className = 'tile';
-  b.style.background = `linear-gradient(160deg, ${G.c[0]}, ${G.c[1]})`; b.innerHTML = '<b></b><small></small>';
-  b.querySelector('b').textContent = G.t; b.querySelector('small').textContent = G.y; b.onclick = () => pickGame(i); gWrap.appendChild(b); });
+  b.style.background = `url(${coverURL[i]}) center/cover`; b.innerHTML = '';
+  b.setAttribute('aria-label', G.t); b.onclick = () => pickGame(i); gWrap.appendChild(b); });
 function pickGame(i){ selGame = i; drawTV(); [...gWrap.children].forEach((b,k) => b.setAttribute('aria-pressed', k===i ? 'true' : 'false'));
   gTitle.textContent = GAMES[i].t; gNote.textContent = GAMES[i].n; }
 function openGames(){ pickGame(selGame); openModal(gameModal); }
