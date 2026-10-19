@@ -1209,11 +1209,14 @@ let apolloBoard, NEAR = null, NEAR_READY = false;
   let splatObj = null, splatState = 'idle';
   function loadSplat(){
     if (splatState !== 'idle') return; splatState = 'loading';
-    import('./vendor/gaussian-splats-3d.module.js').then(GS => {
+    /* GitHub Pages gzips the .splat, so its Content-Length is the compressed size and the library's
+       streaming loader overflows. Download it whole first and hand the library a blob URL instead. */
+    Promise.all([import('./vendor/gaussian-splats-3d.module.js'), fetch(SPLAT.url).then(r => { if (!r.ok) throw new Error('splat ' + r.status); return r.arrayBuffer(); })]).then(([GS, buf]) => {
+      const blobUrl = URL.createObjectURL(new Blob([buf]));
       const v = new GS.DropInViewer({ sharedMemoryForWorkers:false, gpuAcceleratedSort:false, dynamicScene:true, integerBasedSort:true, sphericalHarmonicsDegree:0 });
       splatObj = v; scene.add(v); window.__splatObj = v;
       const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(SPLAT.tiltX, SPLAT.yaw, SPLAT.tiltZ, 'YXZ'));
-      return v.addSplatScene(SPLAT.url, { showLoadingUI:false, scale:[SPLAT.scale, SPLAT.scale, SPLAT.scale], position:[0, SPLAT.y, -15], rotation:[q.x, q.y, q.z, q.w] });
+      return v.addSplatScene(blobUrl, { format:GS.SceneFormat.Splat, showLoadingUI:false, scale:[SPLAT.scale, SPLAT.scale, SPLAT.scale], position:[0, SPLAT.y, -15], rotation:[q.x, q.y, q.z, q.w] });
     }).then(() => { splatState = 'ready'; mat.visible = false;
       apolloEx.title = 'Apollo, in 3D'; apolloEx.kick = 'Exhibit 00 · Gaussian splat';
       apolloEx.cap = 'A real 3D scan: about 280,000 tiny blurry splats, trained on my laptop’s GPU from videos of me walking all the way around him (the back ones were the hard part). Walk around and look from any side.';
