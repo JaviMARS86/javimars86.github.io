@@ -1202,24 +1202,28 @@ let apolloBoard, NEAR = null, NEAR_READY = false;
   });
   /* the real thing: a Gaussian splat trained on my laptop's GPU from two videos circling him.
      It only loads when you're in or next to the Apollo room; until then (or if it can't load) the 360 version stays. */
-  const SPLAT = { url:'ex/apollo.splat', scale:.9, yaw:0, y:1.055, sway:0, tiltX:0, tiltZ:0 }; window.__splat = SPLAT;
-  let splatGroup = null, splatState = 'idle';
+  const SPLAT = { url:'ex/apollo.splat', scale:.9, yaw:0, y:1.055, tiltX:0, tiltZ:0 }; window.__splat = SPLAT;
+  /* The splat lives directly in the scene with its transform baked in (no animated parent group):
+     the splat library sorts splats in its own space, and a moving parent made the depth order wrong
+     (popping, a flat look, the front showing through from behind). */
+  let splatObj = null, splatState = 'idle';
   function loadSplat(){
     if (splatState !== 'idle') return; splatState = 'loading';
     import('./vendor/gaussian-splats-3d.module.js').then(GS => {
       const v = new GS.DropInViewer({ sharedMemoryForWorkers:false, gpuAcceleratedSort:false, dynamicScene:true, integerBasedSort:true, sphericalHarmonicsDegree:0 });
-      splatGroup = new THREE.Group(); splatGroup.position.set(0, SPLAT.y, -15); const tg = new THREE.Group(); tg.name = "tilt"; tg.add(v); splatGroup.add(tg); scene.add(splatGroup);
-      return v.addSplatScene(SPLAT.url, { showLoadingUI:false, scale:[SPLAT.scale, SPLAT.scale, SPLAT.scale], position:[0,0,0] });
+      splatObj = v; scene.add(v); window.__splatObj = v;
+      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(SPLAT.tiltX, SPLAT.yaw, SPLAT.tiltZ, 'YXZ'));
+      return v.addSplatScene(SPLAT.url, { showLoadingUI:false, scale:[SPLAT.scale, SPLAT.scale, SPLAT.scale], position:[0, SPLAT.y, -15], rotation:[q.x, q.y, q.z, q.w] });
     }).then(() => { splatState = 'ready'; mat.visible = false;
-      apolloEx.title = 'Apollo, in 3D'; apolloEx.kick = 'Exhibit 00 \u00b7 Gaussian splat';
-      apolloEx.cap = 'A real 3D scan: about 280,000 tiny blurry splats, trained on my laptop\u2019s GPU from videos of me walking all the way around him (the back ones were the hard part). Walk around and look from any side.';
+      apolloEx.title = 'Apollo, in 3D'; apolloEx.kick = 'Exhibit 00 · Gaussian splat';
+      apolloEx.cap = 'A real 3D scan: about 280,000 tiny blurry splats, trained on my laptop’s GPU from videos of me walking all the way around him (the back ones were the hard part). Walk around and look from any side.';
       if (focus === apolloEx) setFocus(apolloEx);
-    }).catch(e => { console.warn('splat failed, keeping the 360 version', e); splatState = 'failed'; if (splatGroup) splatGroup.visible = false; });
+    }).catch(e => { console.warn('splat failed, keeping the 360 version', e); splatState = 'failed'; if (splatObj) splatObj.visible = false; mat.visible = true; });
   }
-  updaters.push((t) => {
+  updaters.push(() => {
     const near = NEAR_READY && NEAR[curRoom].has('apollo');
     if (near) loadSplat();
-    if (splatGroup){ splatGroup.visible = near && splatState !== 'failed'; splatGroup.rotation.y = SPLAT.yaw + Math.sin(t*.2)*SPLAT.sway; const tg = splatGroup.children[0]; if (tg){ tg.rotation.x = SPLAT.tiltX; tg.rotation.z = SPLAT.tiltZ; } }
+    if (splatObj) splatObj.visible = near && splatState === 'ready';
   });
 }
 
