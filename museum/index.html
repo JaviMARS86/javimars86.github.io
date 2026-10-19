@@ -1177,7 +1177,7 @@ function drawTV(){
   for (const [list, W] of [[west, Wl], [east, E]]){ list.forEach((it, i) => hang(W, cols[i % 6], i < 6 ? 3.6 : 1.5, it)); pictureLight(W, 8, 4.55, 14); }
 }
 /* Apollo in 360: 72 views cut out of my turntable video. The pedestal shows whichever view matches where you stand. */
-let apolloBoard;
+let apolloBoard, NEAR = null, NEAR_READY = false;
 {
   const top = pedestal(0, -15, { r:.75, spot:true });
   const atlas = tex('ex/apollo-360.webp');
@@ -1191,7 +1191,7 @@ let apolloBoard;
   apolloBoard = new THREE.Mesh(new THREE.PlaneGeometry(wid, hgt), mat); apolloBoard.position.set(0, 1.05 + hgt/2 - .01, -15); world.add(apolloBoard);
   const shadow = new THREE.Mesh(new THREE.CircleGeometry(.36, 32), new THREE.MeshBasicMaterial({ color:0x000000, transparent:true, opacity:.35, depthWrite:false }));
   shadow.rotation.x = -Math.PI/2; shadow.scale.set(1, .6, 1); shadow.position.y = .045; top.add(shadow);
-  addExhibit(apolloBoard, { center:new THREE.Vector3(0, 1.7, -15), normal:new THREE.Vector3(0,0,1), w:1, h:1.3, room:'apollo', dist:2.5,
+  const apolloEx = addExhibit(apolloBoard, { center:new THREE.Vector3(0, 1.7, -15), normal:new THREE.Vector3(0,0,1), w:1, h:1.3, room:'apollo', dist:2.5,
     kick:'Exhibit 00', title:'Apollo, in 360', cap:'Walk around him. These are real frames from a video I took circling him, matched to where you’re standing.' });
   updaters.push((t) => {
     const dx = camera.position.x - 0, dz = camera.position.z + 15;
@@ -1199,6 +1199,27 @@ let apolloBoard;
     const deg = THREE.MathUtils.radToDeg(Math.atan2(-dx, dz)) + Math.sin(t*.25)*22;
     const v = (((deg/5) % 72) + 72) % 72, i0 = Math.floor(v);
     mat.uniforms.i0.value = i0; mat.uniforms.i1.value = (i0 + 1) % 72; mat.uniforms.f.value = v - i0;
+  });
+  /* the real thing: a Gaussian splat trained on my laptop's GPU from two videos circling him.
+     It only loads when you're in or next to the Apollo room; until then (or if it can't load) the 360 version stays. */
+  const SPLAT = { url:'ex/apollo.splat', scale:.9, yaw:Math.PI*1.5, y:1.055, sway:.5 }; window.__splat = SPLAT;
+  let splatGroup = null, splatState = 'idle';
+  function loadSplat(){
+    if (splatState !== 'idle') return; splatState = 'loading';
+    import('./vendor/gaussian-splats-3d.module.js').then(GS => {
+      const v = new GS.DropInViewer({ sharedMemoryForWorkers:false, gpuAcceleratedSort:false, dynamicScene:true, integerBasedSort:true, sphericalHarmonicsDegree:0 });
+      splatGroup = new THREE.Group(); splatGroup.position.set(0, SPLAT.y, -15); splatGroup.add(v); scene.add(splatGroup);
+      return v.addSplatScene(SPLAT.url, { showLoadingUI:false, scale:[SPLAT.scale, SPLAT.scale, SPLAT.scale], position:[0,0,0] });
+    }).then(() => { splatState = 'ready'; mat.visible = false;
+      apolloEx.title = 'Apollo, in 3D'; apolloEx.kick = 'Exhibit 00 \u00b7 Gaussian splat';
+      apolloEx.cap = 'A real 3D scan: about 200,000 tiny blurry splats, trained on my laptop\u2019s GPU from two videos of me walking around him. Walk around and look from any side. (The tail needs a better video. He\u2019s working on it.)';
+      if (focus === apolloEx) setFocus(apolloEx);
+    }).catch(e => { console.warn('splat failed, keeping the 360 version', e); splatState = 'failed'; if (splatGroup) splatGroup.visible = false; });
+  }
+  updaters.push((t) => {
+    const near = NEAR_READY && NEAR[curRoom].has('apollo');
+    if (near) loadSplat();
+    if (splatGroup){ splatGroup.visible = near && splatState !== 'failed'; splatGroup.rotation.y = SPLAT.yaw + Math.sin(t*.2)*SPLAT.sway; }
   });
 }
 
@@ -1517,8 +1538,9 @@ world.updateMatrixWorld(true);
 for (let i = ARCH_END; i < world.children.length; i++){ const o = world.children[i]; if (!o.userData.dynamic && o.children.length) bakeUnit(o); }
 
 /* draw only the room you're in and the ones next to it */
-const NEAR = {}; for (const k of Object.keys(ROOMS)) NEAR[k] = new Set([k]);
+NEAR = {}; for (const k of Object.keys(ROOMS)) NEAR[k] = new Set([k]);
 for (const d of DOORS){ NEAR[d.a].add(d.b); NEAR[d.b].add(d.a); }
+NEAR_READY = true;
 const CONTENT = Object.fromEntries(Object.keys(ROOMS).map(k => [k, []]));
 { const box = new THREE.Box3(), c = new THREE.Vector3(), sz = new THREE.Vector3();
   world.updateMatrixWorld(true);
@@ -1532,7 +1554,7 @@ const enter = document.getElementById('enter');
 manager.onLoad = () => { barfill.style.width = '100%'; enter.classList.add('ready'); };
 enter.onclick = () => { document.getElementById('load').classList.add('done'); kickVideo(); };
 requestAnimationFrame(frame);
-window.__museum = { exhibits, cam, visit, goRoom, ROOMS, route, standFor, walkable, renderer, CONTENT, get cur(){ return curRoom; }, ARCH_END,
+window.__museum = { scene, exhibits, cam, visit, goRoom, ROOMS, route, standFor, walkable, renderer, CONTENT, get cur(){ return curRoom; }, ARCH_END,
   teleport(x, z, yaw, pitch=0){ move = null; cam.pos.set(x, EYE, z); cam.yaw = yaw; cam.pitch = pitch; },
   jumpTo(i){ const ex = typeof i === 'number' ? exhibits[i] : exhibits.find(e => e.title === i); setFocus(ex); const p = standFor(ex); cam.pos.copy(p); const a = lookAngles(p, ex.center); cam.yaw = a.yaw; cam.pitch = a.pitch; move = null; } };
 </script>
