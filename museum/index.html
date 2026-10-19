@@ -1139,63 +1139,239 @@ function drawTV(){
    WING II · EXPERIENCE
    ========================================================= */
 {
-  const N = wf('exp','N'), S = wf('exp','S'), Wl = wf('exp','W'), E = wf('exp','E');
-  infoStand('exp', doorOf('lobby','exp'), 1, { kicker:'Wing II', title:'Experience', body:'Where I studied (north wall), where I’ve worked (west wall), and the groups I’ve led (south wall).' });
-  // north: education
-  const photoSoon = (W, t, label) => { const ph = canvasTex(600, 420, (g,w,h)=>{ g.fillStyle='#0f1d44'; g.fillRect(0,0,w,h); g.strokeStyle='rgba(232,180,74,.6)'; g.setLineDash([14,10]); g.lineWidth=4; g.strokeRect(24,24,w-48,h-48);
-      g.fillStyle='#E8B44A'; g.textAlign='center'; g.font='600 26px "JetBrains Mono", monospace'; g.fillText('PHOTO COMING SOON', w/2, h/2-6); g.fillStyle='#C9CFDE'; g.font='26px "Bricolage Grotesque", sans-serif'; g.fillText(label, w/2, h/2+36); });
-    const m = photoMesh(ph, 2.0, 1.4, 0); place(frameAround(m, 2.0, 1.4), W, t, 3.0, .06); pictureLight(W, t, 3.0 + .82, 2.0); };
-  panel(N, 4.0, 1.75, 3.5, 1.6, { kicker:'2025 – 2029 · Rochester, NY', title:'University of Rochester', body:'B.S. Mechanical Engineering, with minors in Aerospace Engineering and ECE (Robotics). Hajim School. Merit scholarship.', light:false });
-  photoSoon(N, 4.0, 'University of Rochester');
-  panel(N, 12.0, 1.75, 3.5, 1.6, { kicker:'Until 2025 · Benetiússer, Valencia', title:'IES Maria Carbonell i Sánchez', body:'Middle and high school. Diploma for Academic Performance, and Diploma for Teamwork and Good Attitude.', light:false });
-  photoSoon(N, 12.0, 'IES Maria Carbonell i Sánchez');
-  // west: a work timeline, oldest on the left
-  const tl = Wl;
-  const line = new THREE.Mesh(new THREE.BoxGeometry(12.6, .03, .02), trimMat); place(line, tl, 7, 3.55, .03);
-  const jobs = [
-    ['Summer 2024', 'EDSI · Rochester Hills, MI', 'Prototype Assembly', 'Built prototype robotic tooling for automotive and other clients, about 40 hours a week. I read the mechanical and electrical drawings, planned each assembly, and built it by hand.'],
-    ['2025 – 2026', 'Rettner Hall Media Lab', 'Digital Media Assistant', 'Help desk and gear loans: cameras, lighting, microphones, and showing people how to use them. I also ran the lab’s 3D printing service.'],
-    ['Aug 2026 – now', 'Rettner Hall Media Lab', 'Rettner Lead', 'I co-build the weekly schedule for a team of 11, help hire and train new staff, and am the link between the team and our supervisor.'],
-    ['Sept 2026 – now', 'Hajim School of Engineering', 'Undergraduate TA, ME 102', 'Intro to Aerospace Engineering with Prof. John Lambropoulos. I lead a workshop section, hold office hours and grade homework.'],
-  ];
-  jobs.forEach(([when, where, title, body], i) => { const t = 2.0 + i*3.33;
-    const dot = new THREE.Mesh(new THREE.SphereGeometry(.07, 16, 12), trimMat); place(dot, tl, t, 3.55, .05);
-    const yr = new THREE.Mesh(new THREE.PlaneGeometry(2.2, .3), new THREE.MeshBasicMaterial({ transparent:true, map:canvasTex(880, 120, (g,w,h)=>{ g.textAlign='center'; g.fillStyle='#E8B44A'; g.font='600 58px "JetBrains Mono", monospace'; g.fillText(when.toUpperCase(), w/2, 82); }) })); place(yr, tl, t, 3.9, .03);
-    panel(tl, t, 2.2, 2.9, 2.2, { kicker:where, title, body, light:false }); });
-  pictureLight(tl, 7, 3.3, 12);
-  // south: leadership and clubs
-  const lead = [
-    ['Valencia · 2022 – 2025', 'Juniors MD youth group', 'Weekly activities for kids, plus three-day and week-long camps with storylines we wrote ourselves.'],
-    ['Valencia · 2023 – 2025', 'American Space Valencia', 'Led the Makers Club, teaching kids to build with 3D pens. Ran sound for the teen drama club and built backdrops.'],
-    ['Rochester · 2026 – now', 'Rocketry Club', 'The hands-on side of aerospace: structures and propulsion, avionics and control.'],
-    ['Toolbox', 'What I bring', 'C/C++ (GCC, CMake), 3D printing, prototyping, reading drawings, hand tools. Cameras, lighting and live sound. English and Spanish.'],
-  ];
-  lead.forEach(([k, t, b], i) => panel(S, 2.0 + i*4.0, 2.3, 3.0, 2.0, { kicker:k, title:t, body:b }));
-  // props: the gear, the 3D printer, a model rocket
-  const camTop = pedestal(-15, -2.7, { r:.5 });
-  { const g = new THREE.Group(); g.position.y = .2; g.rotation.y = .5; camTop.add(g);
-    const body = new THREE.Mesh(new THREE.BoxGeometry(.46,.3,.18), darkMat); g.add(body);
-    const hump = new THREE.Mesh(new THREE.BoxGeometry(.18,.1,.14), darkMat); hump.position.set(0,.19,0); g.add(hump);
-    const grip = new THREE.Mesh(new THREE.BoxGeometry(.1,.28,.08), darkMat); grip.position.set(-.2,-.01,.1); g.add(grip);
-    const lens = new THREE.Mesh(new THREE.CylinderGeometry(.11,.12,.26,32), darkMat); lens.rotation.x = Math.PI/2; lens.position.set(.04,0,.21); g.add(lens);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(.115,.012,8,32), trimMat); ring.position.set(.04,0,.29); g.add(ring);
-    const glass = new THREE.Mesh(new THREE.CircleGeometry(.09,32), new THREE.MeshStandardMaterial({ color:0x223a66, roughness:.1, metalness:.8 })); glass.position.set(.04,0,.341); g.add(glass);
-    addExhibit(g, { center:new THREE.Vector3(-15, 1.3, -2.7), normal:new THREE.Vector3(1,0,0), w:.8, h:.8, room:'exp', dist:2.1,
-      kick:'Rettner Hall Media Lab', title:'The gear', cap:'Cameras, lights and mics went out and came back through my desk every shift. I also taught people how to use them.' }); }
-  const prTop = pedestal(-15, 2.7, { r:.55 });
-  { const g = new THREE.Group(); prTop.add(g); g.rotation.y = -1.2;
-    const fm = new THREE.MeshStandardMaterial({ color:0x2b2f3a, roughness:.5, metalness:.5 });
-    const base = new THREE.Mesh(new THREE.BoxGeometry(.62,.08,.5), fm); base.position.y = .08; g.add(base);
-    for (const sx of [-.28,.28]){ const p = new THREE.Mesh(new THREE.BoxGeometry(.04,.62,.04), fm); p.position.set(sx,.43,-.18); g.add(p); }
-    const topb = new THREE.Mesh(new THREE.BoxGeometry(.62,.05,.05), fm); topb.position.set(0,.74,-.18); g.add(topb);
-    const bed = new THREE.Mesh(new THREE.BoxGeometry(.4,.02,.36), new THREE.MeshStandardMaterial({ color:0x111111, roughness:.3 })); bed.position.set(0,.16,0); g.add(bed);
-    const printed = new THREE.Mesh(new THREE.CylinderGeometry(.06,.07,.1,6), trimMat); printed.position.set(0,.22,0); g.add(printed);
-    const car = new THREE.Group(); car.userData.dynamic = true; car.position.set(0,.6,-.12); g.add(car);
-    const head = new THREE.Mesh(new THREE.BoxGeometry(.09,.1,.08), new THREE.MeshStandardMaterial({ color:0xE8B44A, roughness:.4 })); car.add(head);
-    updaters.push(t => { car.position.x = Math.sin(t*1.7)*.16; car.position.z = -.12 + Math.sin(t*1.13)*.06; });
-    addExhibit(g, { center:new THREE.Vector3(-15, 1.45, 2.7), normal:new THREE.Vector3(1,0,0), w:.8, h:.8, room:'exp', dist:2.2,
-      kick:'Rettner Hall Media Lab', title:'The 3D printer', cap:'I ran the lab’s 3D printing service: prepping files, running the printer, pricing jobs, and telling people their print was ready.' }); }
-  { const g = new THREE.Group(); g.position.set(-11.5, 0, 5.2); world.add(g); OBST.push({ x:-11.5, z:5.2, r:.45 });
+  const N = wf('exp','N'), S = wf('exp','S'), Wl = wf('exp','W');
+  infoStand('exp', doorOf('lobby','exp'), 1, { kicker:'Wing II', title:'Experience', body:'Left wall: where I studied. Straight ahead: where I’ve worked, with the gear I worked with. Right wall: the groups I’ve led and what I bring.' });
+
+  /* ---------- shared pieces for this room ---------- */
+  // big gold section title painted on the wall, with a thin rule under it
+  const wallTitle = (W, t, y, label, w) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, .5), new THREE.MeshBasicMaterial({ transparent:true, depthWrite:false, map:canvasTex(Math.round(w*200), 100, (g,cw,ch)=>{
+      g.textAlign='center'; g.fillStyle='#E8B44A'; g.font='600 46px "JetBrains Mono", monospace'; g.fillText(label.split('').join(String.fromCharCode(8202)), cw/2, 56);
+      const tw = Math.min(cw*.9, g.measureText(label).width*1.25 + 120); g.fillRect((cw-tw)/2, 80, tw, 3); }) })); place(m, W, t, y, .02); };
+  // little white line drawings for the card headers
+  const ART = {
+    shield(g,x,y,w,h){ const cx = x+w/2, s = h*.95; g.beginPath(); g.moveTo(cx-s*.38,y); g.lineTo(cx+s*.38,y); g.lineTo(cx+s*.38,y+s*.5); g.quadraticCurveTo(cx+s*.36,y+s*.85,cx,y+s); g.quadraticCurveTo(cx-s*.36,y+s*.85,cx-s*.38,y+s*.5); g.closePath(); g.stroke();
+      g.fillStyle='#E8B44A'; g.fillRect(cx-s*.46, y+s*.38, s*.92, s*.17); g.fillStyle='#0d1938'; g.font=`700 ${s*.11}px Fraunces, Georgia, serif`; g.textAlign='center'; g.fillText('MELIORA', cx, y+s*.505); g.textAlign='left';
+      g.fillStyle='#fff'; for (const [dx,dy] of [[-.17,.2],[.17,.2],[0,.72]]){ g.beginPath(); g.arc(cx+s*dx, y+s*dy, s*.08, 0, 7); g.stroke(); } },
+    cap(g,x,y,w,h){ const cx = x+w/2, cy = y+h*.4, s = h*.9; g.beginPath(); g.moveTo(cx-s*.55,cy); g.lineTo(cx,cy-s*.25); g.lineTo(cx+s*.55,cy); g.lineTo(cx,cy+s*.25); g.closePath(); g.stroke();
+      g.beginPath(); g.moveTo(cx-s*.32,cy+s*.12); g.lineTo(cx-s*.32,cy+s*.42); g.quadraticCurveTo(cx,cy+s*.6,cx+s*.32,cy+s*.42); g.lineTo(cx+s*.32,cy+s*.12); g.stroke();
+      g.beginPath(); g.moveTo(cx+s*.45,cy+s*.04); g.lineTo(cx+s*.45,cy+s*.42); g.stroke(); g.beginPath(); g.arc(cx+s*.45,cy+s*.46,s*.04,0,7); g.fill(); },
+    arm(g,x,y,w,h){ const bx = x+w*.25, by = y+h*.95; g.fillRect(bx-h*.2, by-h*.08, h*.4, h*.08);
+      const j1 = [bx, by-h*.12], j2 = [bx+w*.18, y+h*.3], j3 = [bx+w*.55, y+h*.42];
+      g.lineWidth = h*.09; g.beginPath(); g.moveTo(...j1); g.lineTo(...j2); g.lineTo(...j3); g.stroke(); g.lineWidth = 5;
+      for (const j of [j1,j2,j3]){ g.beginPath(); g.arc(j[0], j[1], h*.07, 0, 7); g.fill(); }
+      g.beginPath(); g.moveTo(j3[0], j3[1]); g.lineTo(j3[0]+h*.18, j3[1]-h*.14); g.lineTo(j3[0]+h*.3, j3[1]-h*.08); g.moveTo(j3[0], j3[1]); g.lineTo(j3[0]+h*.18, j3[1]+h*.14); g.lineTo(j3[0]+h*.3, j3[1]+h*.08); g.stroke(); },
+    gear(g,x,y,w,h){ // a camera and a little 3D printer
+      const s = h*.8, cx = x+w*.32, cy = y+h*.55; g.beginPath(); g.roundRect(cx-s*.42, cy-s*.25, s*.84, s*.55, 8); g.stroke(); g.strokeRect(cx-s*.14, cy-s*.36, s*.28, s*.11);
+      g.beginPath(); g.arc(cx, cy+s*.03, s*.17, 0, 7); g.stroke(); g.beginPath(); g.arc(cx, cy+s*.03, s*.07, 0, 7); g.fill();
+      const px = x+w*.78, py = y+h*.1, pw = h*.62, ph = h*.8; g.strokeRect(px-pw/2, py, pw, ph); g.strokeRect(px-pw/2+6, py+ph*.18, pw-12, ph*.72);
+      g.fillRect(px-pw*.18, py+ph*.38, pw*.36, ph*.1); g.fillRect(px-pw*.3, py+ph*.78, pw*.6, 5); },
+    plane(g,x,y,w,h){ const cx = x+w/2, cy = y+h*.5, s = h*.85; g.beginPath(); g.moveTo(cx+s*.6, cy-s*.05); g.lineTo(cx-s*.5, cy-s*.05); g.quadraticCurveTo(cx-s*.62, cy, cx-s*.5, cy+s*.05); g.lineTo(cx+s*.6, cy+s*.05); g.closePath(); g.stroke();
+      g.beginPath(); g.moveTo(cx+s*.05, cy-s*.05); g.lineTo(cx-s*.2, cy-s*.48); g.lineTo(cx-s*.32, cy-s*.48); g.lineTo(cx-s*.12, cy-s*.05); g.moveTo(cx+s*.05, cy+s*.05); g.lineTo(cx-s*.2, cy+s*.48); g.lineTo(cx-s*.32, cy+s*.48); g.lineTo(cx-s*.12, cy+s*.05); g.stroke();
+      g.beginPath(); g.moveTo(cx+s*.48, cy-s*.05); g.lineTo(cx+s*.58, cy-s*.25); g.lineTo(cx+s*.63, cy-s*.25); g.lineTo(cx+s*.6, cy-s*.05); g.stroke(); },
+    tent(g,x,y,w,h){ const cx = x+w*.42, by = y+h*.92, s = h*.85; g.beginPath(); g.moveTo(cx-s*.55, by); g.lineTo(cx, by-s*.75); g.lineTo(cx+s*.55, by); g.closePath(); g.stroke();
+      g.beginPath(); g.moveTo(cx, by-s*.75); g.lineTo(cx-s*.12, by); g.moveTo(cx, by-s*.75); g.lineTo(cx+s*.12, by); g.stroke(); g.beginPath(); g.moveTo(x+w*.05, by); g.lineTo(x+w*.98, by); g.stroke();
+      const fx = x+w*.86; g.fillStyle='#ffcf6b'; g.beginPath(); g.moveTo(fx, by-s*.4); g.quadraticCurveTo(fx+s*.16, by-s*.15, fx+s*.08, by-s*.02); g.lineTo(fx-s*.08, by-s*.02); g.quadraticCurveTo(fx-s*.16, by-s*.15, fx, by-s*.4); g.fill(); },
+    pen(g,x,y,w,h){ const s = h; g.save(); g.translate(x+w*.62, y+h*.45); g.rotate(-.75); g.beginPath(); g.roundRect(-s*.09, -s*.48, s*.18, s*.72, s*.06); g.stroke(); g.beginPath(); g.moveTo(-s*.06, s*.24); g.lineTo(0, s*.36); g.lineTo(s*.06, s*.24); g.stroke(); g.restore();
+      g.strokeStyle='#ffcf6b'; g.beginPath(); g.moveTo(x+w*.05, y+h*.85); for (let i=0;i<=20;i++){ const u = i/20; g.lineTo(x+w*(.05+u*.42), y+h*(.85 - Math.sin(u*Math.PI*3)*.12 - u*.12)); } g.stroke(); },
+    rocket(g,x,y,w,h){ g.save(); g.translate(x+w*.5, y+h*.5); g.rotate(.6); const s = h*.95; g.beginPath(); g.moveTo(0, -s*.5); g.quadraticCurveTo(s*.14, -s*.3, s*.12, s*.2); g.lineTo(-s*.12, s*.2); g.quadraticCurveTo(-s*.14, -s*.3, 0, -s*.5); g.stroke();
+      g.beginPath(); g.arc(0, -s*.12, s*.05, 0, 7); g.stroke(); g.beginPath(); g.moveTo(s*.12, s*.05); g.lineTo(s*.24, s*.28); g.lineTo(s*.12, s*.2); g.moveTo(-s*.12, s*.05); g.lineTo(-s*.24, s*.28); g.lineTo(-s*.12, s*.2); g.stroke();
+      g.fillStyle='#ffcf6b'; g.beginPath(); g.moveTo(-s*.07, s*.24); g.quadraticCurveTo(0, s*.52, s*.07, s*.24); g.fill(); g.restore(); },
+  };
+  // a museum card: brand-coloured header with a wordmark and a drawing, then the text
+  function expCard(W, t, y, w, h, o){
+    const SC = 300, pw = Math.round(w*SC), ph = Math.round(h*SC), hb = Math.round(Math.min(ph*.3, 120*SC/300*1.4));
+    const tx = canvasTex(pw, ph, (g)=>{
+      g.fillStyle='#EFE8D8'; g.fillRect(0,0,pw,ph);
+      const gr = g.createLinearGradient(0,0,pw,hb); gr.addColorStop(0,o.c1); gr.addColorStop(1,o.c2); g.fillStyle=gr; g.fillRect(0,0,pw,hb); g.fillStyle='#E8B44A'; g.fillRect(0,hb,pw,6);
+      if (o.art){ g.save(); g.strokeStyle='rgba(255,255,255,.92)'; g.fillStyle='rgba(255,255,255,.92)'; g.lineWidth=5; g.lineCap='round'; g.lineJoin='round'; ART[o.art](g, pw - hb*1.45, hb*.14, hb*1.3, hb*.72); g.restore(); }
+      let bf = hb*.3; const maxW = pw - hb*1.6 - 40; g.fillStyle='#fff'; g.font=`600 ${bf}px Fraunces, Georgia, serif`; while (g.measureText(o.brand).width > maxW && bf > 14){ bf *= .94; g.font=`600 ${bf}px Fraunces, Georgia, serif`; }
+      g.fillText(o.brand, 34, hb*.52); if (o.sub){ g.font=`600 ${hb*.12}px "JetBrains Mono", monospace`; g.fillStyle='rgba(255,255,255,.78)'; g.fillText(o.sub.toUpperCase(), 36, hb*.52 + hb*.27); }
+      const paras = Array.isArray(o.body) ? o.body : [[null, o.body]], pad = 34, top = hb + 22;
+      const lay = (k, draw) => { let yy = top; const kf = 22*k, tf = 46*k, bfz = 25*k, hf = 25*k;
+        if (o.kicker){ g.font = `600 ${kf}px "JetBrains Mono", monospace`; g.fillStyle = '#8a6a2a'; yy += kf*1.3; if (draw) g.fillText(o.kicker.toUpperCase(), pad, yy); }
+        g.font = `600 ${tf}px Fraunces, Georgia, serif`; g.fillStyle = '#0D1938'; yy += tf*1.15; yy = draw ? wrap(g, o.title, pad, yy, pw-2*pad, tf*1.08) : measure(g, o.title, yy, tf*1.08, pw-2*pad);
+        for (const [hd, tx2] of paras){ yy += bfz*.7;
+          if (hd){ g.font = `600 ${hf}px "Bricolage Grotesque", system-ui, sans-serif`; g.fillStyle = '#8a6a2a'; yy += hf*1.25; if (draw) g.fillText(hd, pad, yy); }
+          g.font = `400 ${bfz}px "Bricolage Grotesque", system-ui, sans-serif`; g.fillStyle = '#2c3655'; yy += bfz*1.35; yy = draw ? wrap(g, tx2, pad, yy, pw-2*pad, bfz*1.36) : measure(g, tx2, yy, bfz*1.36, pw-2*pad); }
+        return yy; };
+      let k = 1.9; while (k > .5 && lay(k, false) > ph - 30) k *= .96; lay(k, true); });
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map:tx, color:0xe2ddd0 })); place(m, W, t, y, .03);
+    const back = new THREE.Mesh(new THREE.BoxGeometry(w+.06, h+.06, .03), frameMat); place(back, W, t, y, .0);
+    const cap = Array.isArray(o.body) ? o.body.map(([hd, b]) => (hd ? hd + ': ' : '') + b).join(' ') : o.body;
+    return addExhibit(m, { center:onWall(W, t, y, .05), normal:W.n.clone(), w, h, room:'exp', kick:o.kicker || o.brand, title:o.title, cap });
+  }
+
+  /* ---------- north wall: where I studied ---------- */
+  wallTitle(N, 8, 5.0, 'WHERE I STUDIED', 8);
+  hang(N, 3.1, 3.2, { src:'ex/ur-meliora', w:2.5, h:2.5/1.328, depth:0, kick:'University of Rochester', title:'Meliora', cap:'The Meliora letters in front of Rush Rhees Library, at sunset. “Ever better” is the university’s motto.' });
+  hang(N, 5.75, 3.2, { src:'ex/ur-snow', w:1.4, h:1.4/.753, depth:0, kick:'University of Rochester', title:'First real snow', cap:'A Rochester winter, for someone from Valencia. The banners get it worst.' });
+  expCard(N, 4.4, 1.45, 4.6, 1.2, { brand:'University of Rochester', sub:'Hajim School of Engineering', c1:'#021e4d', c2:'#0a3a85', art:'shield',
+    kicker:'2025 – 2029 · Rochester, NY', title:'B.S. Mechanical Engineering', body:'Minors in Aerospace Engineering and ECE (Robotics). Merit scholarship.' });
+  hang(N, 11.2, 3.2, { src:'ex/ies-building', w:3.1, h:3.1/1.778, depth:0, kick:'IES Maria Carbonell i Sánchez', title:'My high school', cap:'IES Maria Carbonell i Sánchez in Benetússer, Valencia, on one of its many sunny days.' });
+  { const m = photoMesh(tex('ex/ies-logo.jpg'), 1.6, 1.6/4.472, 0, 0); place(frameAround(m, 1.6, 1.6/4.472), N, 14.1, 3.75, .06); }
+  { const pl = new THREE.Mesh(new THREE.PlaneGeometry(1.6, .9), new THREE.MeshBasicMaterial({ map:canvasTex(480, 270, (g,w,h)=>{ g.fillStyle='#0f1d44'; g.fillRect(0,0,w,h); g.fillStyle='#E8B44A'; g.fillRect(0,0,w,5);
+      g.font='600 20px "JetBrains Mono", monospace'; g.fillText('TWO DIPLOMAS', 26, 46); g.fillStyle='#EFE8D8'; g.font='600 30px Fraunces, Georgia, serif'; g.fillText('Academic Performance', 26, 104); g.fillText('Teamwork & Good Attitude', 26, 156);
+      g.fillStyle='#C9CFDE'; g.font='22px "Bricolage Grotesque", sans-serif'; g.fillText('Benetússer, Valencia, Spain', 26, 222); }) })); place(pl, N, 14.1, 2.85, .03); }
+  expCard(N, 12.0, 1.45, 4.6, 1.2, { brand:'IES Maria Carbonell i Sánchez', sub:'Benetússer · Valencia', c1:'#1b4fa8', c2:'#3d7be0', art:'cap',
+    kicker:'Until 2025', title:'Middle and high school', body:'Diploma for Academic Performance, and Diploma for Teamwork and Good Attitude.' });
+
+  /* ---------- west wall (straight ahead): where I've worked ---------- */
+  wallTitle(Wl, 7, 5.0, 'WHERE I’VE WORKED', 8);
+  const tl = Wl, jobsT = [2.4, 7.0, 11.6], jobsWhen = ['SUMMER 2024', '2025 – NOW', 'SEPT 2026 – NOW'];
+  { const line = new THREE.Mesh(new THREE.BoxGeometry(11.6, .03, .02), trimMat); place(line, tl, 7, 4.0, .03);
+    jobsT.forEach((t, i) => { const dot = new THREE.Mesh(new THREE.SphereGeometry(.08, 16, 12), trimMat); place(dot, tl, t, 4.0, .05);
+      const lab = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .3), new THREE.MeshBasicMaterial({ transparent:true, depthWrite:false, map:canvasTex(780, 90, (g,w,h)=>{ g.textAlign='center'; g.fillStyle='#E8B44A'; g.font='600 50px "JetBrains Mono", monospace'; g.fillText(jobsWhen[i], w/2, 62); }) }));
+      place(lab, tl, t, 4.32, .03); }); }
+  expCard(tl, 2.4, 2.45, 3.4, 2.3, { brand:'EDSI', sub:'Rochester Hills, Michigan', c1:'#0b2f5c', c2:'#1d63a8', art:'arm',
+    kicker:'Summer 2024', title:'Prototype Assembly', body:'Built prototype robotic tooling for automotive and other clients, about 40 hours a week. I read the mechanical and electrical drawings, planned each assembly, and built it by hand.' });
+  expCard(tl, 7.0, 2.45, 4.0, 2.3, { brand:'Rettner Hall Media Lab', sub:'University of Rochester', c1:'#021e4d', c2:'#6a4a0c', art:'gear',
+    kicker:'2025 – now', title:'From assistant to lead', body:[
+      ['Digital Media Assistant · 2025 – 2026', 'Help desk and gear loans: cameras, lighting, microphones, and showing people how to use them. I also ran the lab’s 3D printing service.'],
+      ['Rettner Lead · Aug 2026 – now', 'I co-build the weekly schedule for a team of 11, help hire and train new staff, and am the link between the team and our supervisor.'] ] });
+  expCard(tl, 11.6, 2.45, 3.4, 2.3, { brand:'Hajim School', sub:'Mechanical Engineering', c1:'#3a1a5c', c2:'#0a3a85', art:'plane',
+    kicker:'Sept 2026 – now', title:'Undergraduate TA, ME 102', body:'Intro to Aerospace Engineering with Prof. John Lambropoulos. I lead a workshop section, hold office hours and grade homework.' });
+
+  /* the gear I lent out, in front of the Rettner card: a Nikon D5100 on a felt-topped plinth */
+  const camTop = pedestal(-21.0, 1.25, { r:.42, h:.92 });
+  { const felt = new THREE.Mesh(new THREE.CylinderGeometry(.36, .36, .03, 40), new THREE.MeshStandardMaterial({ color:0xd8ccb2, roughness:1 })); felt.position.y = .055; camTop.add(felt);
+    const g = new THREE.Group(); g.position.y = .07; g.scale.setScalar(1.3); g.rotation.y = Math.PI/2 - .55; camTop.add(g);
+    const body = new THREE.MeshStandardMaterial({ color:0x2a2a2d, roughness:.62, metalness:.05 });
+    const glossy = new THREE.MeshStandardMaterial({ color:0x1a1a1c, roughness:.25, metalness:.2 });
+    const chrome = new THREE.MeshStandardMaterial({ color:0xc9ccd1, roughness:.2, metalness:.9 });
+    const rubber = new THREE.MeshStandardMaterial({ map:canvasTex(256, 32, (c,w,h)=>{ c.fillStyle='#151516'; c.fillRect(0,0,w,h); c.fillStyle='#2e2e31'; for (let x=0;x<w;x+=8) c.fillRect(x,0,4,h); }), roughness:.85 });
+    const rbox = (w, h, d, r, mat) => { const s = new THREE.Shape(), x = -w/2, y = -h/2; s.moveTo(x+r, y); s.lineTo(x+w-r, y); s.quadraticCurveTo(x+w, y, x+w, y+r); s.lineTo(x+w, y+h-r); s.quadraticCurveTo(x+w, y+h, x+w-r, y+h); s.lineTo(x+r, y+h); s.quadraticCurveTo(x, y+h, x, y+h-r); s.lineTo(x, y+r); s.quadraticCurveTo(x, y, x+r, y);
+      const geo = new THREE.ExtrudeGeometry(s, { depth:d - .02, bevelEnabled:true, bevelSize:.01, bevelThickness:.01, bevelSegments:3, curveSegments:6 }); geo.translate(0, 0, -(d-.02)/2); return new THREE.Mesh(geo, mat); };
+    const dec = (w, h, draw, mat) => new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ transparent:true, depthWrite:false, map:canvasTex(Math.round(w*1600), Math.round(h*1600), draw) }));
+    // body, grip with its red accent, prism hump and hot shoe
+    const bd = rbox(.39, .25, .14, .04, body); bd.position.set(0, .14, 0); g.add(bd);
+    const grip = rbox(.11, .27, .2, .045, body); grip.position.set(-.155, .15, .035); g.add(grip);
+    const red = new THREE.Mesh(new THREE.BoxGeometry(.09, .012, .012), new THREE.MeshStandardMaterial({ color:0xb3202f, roughness:.4 })); red.position.set(-.13, .235, .133); red.rotation.z = -.35; g.add(red);
+    const hs = new THREE.Shape(); hs.moveTo(-.11, 0); hs.lineTo(.11, 0); hs.lineTo(.065, .1); hs.lineTo(-.065, .1); hs.closePath();
+    const hg = new THREE.ExtrudeGeometry(hs, { depth:.12, bevelEnabled:true, bevelSize:.008, bevelThickness:.008, bevelSegments:2 }); hg.translate(0, 0, -.06);
+    const hump = new THREE.Mesh(hg, body); hump.position.set(.03, .26, 0); g.add(hump);
+    const shoe = new THREE.Mesh(new THREE.BoxGeometry(.075, .012, .07), chrome); shoe.position.set(.03, .37, -.005); g.add(shoe);
+    const shoeL = new THREE.Mesh(new THREE.BoxGeometry(.065, .02, .06), glossy); shoeL.position.set(.03, .36, -.005); g.add(shoeL);
+    // mode dial (knurled), shutter with on/off collar, a few buttons
+    const dial = new THREE.Mesh(new THREE.CylinderGeometry(.042, .042, .03, 28), [rubber, glossy, glossy]); dial.position.set(-.085, .29, -.01); g.add(dial);
+    const dialTop = dec(.07, .07, (c,w,h)=>{ c.fillStyle='#fff'; c.font=`600 ${w*.1}px "Bricolage Grotesque", sans-serif`; c.textAlign='center'; ['AUTO','P','S','A','M','SCENE'].forEach((s2,i)=>{ c.save(); c.translate(w/2,h/2); c.rotate(i*1.05 - 2.6); c.fillText(s2, 0, -h*.34); c.restore(); }); c.fillStyle='#4fc36a'; c.beginPath(); c.arc(w/2, h*.14, w*.035, 0, 7); c.fill(); });
+    dialTop.rotation.x = -Math.PI/2; dialTop.position.set(-.085, .306, -.01); g.add(dialTop);
+    const collar = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, .012, 24), glossy); collar.position.set(-.165, .292, .075); g.add(collar);
+    const shutter = new THREE.Mesh(new THREE.CylinderGeometry(.019, .019, .016, 24), chrome); shutter.position.set(-.165, .302, .075); g.add(shutter);
+    const lever = new THREE.Mesh(new THREE.BoxGeometry(.03, .008, .012), glossy); lever.position.set(-.195, .292, .1); lever.rotation.y = .5; g.add(lever);
+    for (const [bx, bz, col] of [[-.12, .04, 0x1a1a1c], [-.135, .005, 0x1a1a1c], [-.11, .085, 0xd04a2a]]){ const b = new THREE.Mesh(new THREE.CylinderGeometry(.009, .009, .01, 14), new THREE.MeshStandardMaterial({ color:col, roughness:.4 })); b.position.set(bx, .29, bz); g.add(b); }
+    // lens: chrome mount, barrel, ribbed zoom ring, focus ring, front ring with markings, coated glass
+    const L = new THREE.Group(); L.position.set(.04, .13, .075); L.rotation.x = Math.PI/2; g.add(L);
+    const seg = (r1, r2, len, z, mats) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r1, r2, len, 40), mats); m.position.y = z + len/2; L.add(m); return m; };
+    seg(.098, .098, .012, 0, chrome);
+    const barrelTex = canvasTex(1024, 128, (c,w,h)=>{ c.fillStyle='#1b1b1d'; c.fillRect(0,0,w,h); c.fillStyle='#c9a24a'; c.font='600 42px "Bricolage Grotesque", sans-serif'; c.fillText('DX', 40, 80); c.fillStyle='#e8e8e8'; c.font='34px "Bricolage Grotesque", sans-serif'; c.fillText('AF-S NIKKOR 18-55mm 1:3.5-5.6G VR', 130, 78); });
+    seg(.094, .094, .05, .012, [new THREE.MeshStandardMaterial({ map:barrelTex, roughness:.5 }), glossy, glossy]);
+    const zoomTex = canvasTex(512, 64, (c,w,h)=>{ c.fillStyle='#121213'; c.fillRect(0,0,w,h); c.fillStyle='#3a3a3e'; for (let x=0;x<w;x+=6) c.fillRect(x,6,3,h-12); c.fillStyle='#e8e8e8'; c.font='22px sans-serif'; [18,24,35,45,55].forEach((n,i)=>c.fillText(String(n), 30+i*40, 30)); });
+    seg(.1, .1, .085, .062, [new THREE.MeshStandardMaterial({ map:zoomTex, roughness:.85 }), glossy, glossy]);
+    seg(.092, .092, .02, .147, glossy);
+    seg(.095, .095, .03, .167, [new THREE.MeshStandardMaterial({ map:zoomTex, roughness:.85 }), glossy, glossy]);
+    const front = new THREE.Mesh(new THREE.RingGeometry(.062, .096, 48), new THREE.MeshBasicMaterial({ map:canvasTex(512, 512, (c,w,h)=>{ c.fillStyle='#141415'; c.fillRect(0,0,w,h); c.fillStyle='#e8e8e8'; c.textAlign='center'; c.font='600 30px "Bricolage Grotesque", sans-serif';
+      const txt = 'Nikon      AF-S DX NIKKOR      18-55mm 1:3.5-5.6G VR      '; for (let i=0;i<txt.length;i++){ c.save(); c.translate(w/2,h/2); c.rotate(i/txt.length*Math.PI*2); c.fillText(txt[i], 0, -h*.42); c.restore(); } }) }));
+    front.rotation.x = -Math.PI/2; front.position.y = .198; L.add(front);
+    const glass = new THREE.Mesh(new THREE.CircleGeometry(.064, 48), new THREE.MeshStandardMaterial({ roughness:.05, metalness:.6, map:canvasTex(256, 256, (c,w,h)=>{ const r = c.createRadialGradient(w*.42, h*.38, 4, w/2, h/2, w/2); r.addColorStop(0,'#7a6a3a'); r.addColorStop(.2,'#2a4a2e'); r.addColorStop(.55,'#141c22'); r.addColorStop(.85,'#2a1a3a'); r.addColorStop(1,'#0a0a0c'); c.fillStyle=r; c.fillRect(0,0,w,h); c.fillStyle='rgba(255,255,255,.55)'; c.beginPath(); c.ellipse(w*.36, h*.32, w*.08, h*.04, -.6, 0, 7); c.fill(); }) }));
+    glass.rotation.x = -Math.PI/2; glass.position.y = .192; L.add(glass);
+    // branding and the flip screen on the back
+    const brand = dec(.13, .04, (c,w,h)=>{ c.fillStyle='#f0f0f0'; c.font=`italic 700 ${h*.8}px "Bricolage Grotesque", sans-serif`; c.textAlign='center'; c.fillText('Nikon', w/2, h*.8); }); brand.position.set(.03, .3, .069); g.add(brand);
+    const model = dec(.06, .02, (c,w,h)=>{ c.fillStyle='#d8d8d8'; c.font=`600 ${h*.75}px "Bricolage Grotesque", sans-serif`; c.fillText('D5100', 2, h*.78); }); model.position.set(.16, .235, .072); g.add(model);
+    const lcd = new THREE.Mesh(new THREE.BoxGeometry(.2, .15, .012), glossy); lcd.position.set(.02, .13, -.077); g.add(lcd);
+    const lcdGlass = new THREE.Mesh(new THREE.PlaneGeometry(.18, .12), new THREE.MeshStandardMaterial({ color:0x0e1622, roughness:.08, metalness:.5 })); lcdGlass.position.set(.02, .13, -.0835); lcdGlass.rotation.y = Math.PI; g.add(lcdGlass);
+    for (const sx of [-.205, .2]){ const lug = new THREE.Mesh(new THREE.TorusGeometry(.012, .004, 6, 12), chrome); lug.position.set(sx, .25, 0); lug.rotation.y = Math.PI/2; g.add(lug); }
+    addExhibit(g, { center:new THREE.Vector3(-21.0, 1.15, 1.25), normal:new THREE.Vector3(1,0,0), w:.6, h:.5, room:'exp', dist:1.7,
+      kick:'Rettner Hall Media Lab', title:'The gear', cap:'Cameras like this Nikon D5100, plus lights and mics, went out and came back through my desk every shift. I also taught people how to use them.' }); }
+
+  /* the lab's printer: a Bambu Lab H2D with an AMS 2 Pro on top, on a low plinth */
+  const prTop = pedestal(-21.0, -1.35, { r:.5, h:.42, square:true });
+  { const g = new THREE.Group(); g.scale.setScalar(1.12); g.rotation.y = Math.PI/2 - .35; prTop.add(g);
+    const Wd = .49, D = .5, Hh = .62;
+    const alu = new THREE.MeshStandardMaterial({ color:0xb9bbbe, roughness:.38, metalness:.65 });
+    const blk = new THREE.MeshStandardMaterial({ color:0x111214, roughness:.45, metalness:.2 });
+    const inner = new THREE.MeshStandardMaterial({ color:0x1d1e21, roughness:.7 });
+    const smoke = new THREE.MeshStandardMaterial({ color:0x0b0d10, roughness:.05, metalness:.4, transparent:true, opacity:.48, depthWrite:false });
+    const smokeLight = new THREE.MeshStandardMaterial({ color:0x1a1c20, roughness:.05, metalness:.3, transparent:true, opacity:.38, depthWrite:false, side:THREE.DoubleSide });
+    const box = (w, h, d, x, y, z, m) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); g.add(o); return o; };
+    const lbl = (w, h, draw, x, y, z, ry=0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ transparent:true, depthWrite:false, map:canvasTex(Math.round(w*1400), Math.round(h*1400), draw) })); m.position.set(x, y, z); m.rotation.y = ry; g.add(m); return m; };
+    box(Wd+.01, .03, D, 0, .015, 0, blk);                                   // base
+    for (const s of [-1, 1]) box(.05, Hh, D, s*(Wd/2 - .025), Hh/2, 0, alu); // aluminium sides
+    box(Wd-.1, .02, D, 0, Hh-.01, 0, blk);                                   // roof
+    box(Wd-.1, Hh-.05, .01, 0, Hh/2, -D/2+.005, inner);                       // back wall inside
+    box(Wd-.1, .02, D-.02, 0, .04, 0, inner);                                 // floor inside
+    box(Wd-.1, .11, .02, 0, Hh-.065, D/2-.01, blk);                           // front top band
+    lbl(.13, .075, (c,w,h)=>{ c.fillStyle='#0a0a0c'; c.fillRect(0,0,w,h); c.fillStyle='#1f2228'; c.fillRect(8,8,w-16,h-16); c.strokeStyle='#5a6070'; c.lineWidth=3; c.beginPath(); c.arc(w*.38, h*.55, h*.28, 0, 7); c.stroke();
+      c.fillStyle='#4fc36a'; c.beginPath(); c.arc(w*.38, h*.55, 6, 0, 7); c.fill(); c.fillStyle='#2e333d'; for (let i=0;i<3;i++) c.fillRect(w*.62, h*.22 + i*h*.22, w*.3, h*.16); c.fillStyle='#4fc36a'; for (let i=0;i<3;i++) c.fillRect(w*.07, h*.25+i*h*.2, 6, 6); },
+      -Wd/2 + .115, Hh-.065, D/2+.001);
+    lbl(.12, .03, (c,w,h)=>{ c.fillStyle='#f2f2f2'; c.font=`600 ${h*.34}px "Bricolage Grotesque", sans-serif`; c.fillText('Bambu', 2, h*.42); c.fillText('Lab', 2, h*.85); c.font=`700 ${h*.78}px "Bricolage Grotesque", sans-serif`; c.fillText('H2D', w*.38, h*.8); }, Wd/2 - .13, Hh-.04, D/2+.001);
+    const door = box(Wd-.1, Hh-.14, .006, 0, (Hh-.14)/2 + .035, D/2-.004, smoke);
+    box(.012, .12, .02, Wd/2 - .065, .3, D/2+.006, blk);                       // handle
+    for (const [w, h, x, y] of [[Wd-.1, .012, 0, .035], [.012, Hh-.14, -Wd/2+.05, (Hh-.14)/2+.035], [.012, Hh-.14, Wd/2-.05, (Hh-.14)/2+.035]]) box(w, h, .012, x, y, D/2-.004, blk);
+    // the right-side window, with the logo above it
+    const win = new THREE.Mesh(new THREE.PlaneGeometry(.3, .4), smokeLight); win.position.set(Wd/2 + .0015, .38, .03); win.rotation.y = Math.PI/2; g.add(win);
+    const winFrame = new THREE.Mesh(new THREE.PlaneGeometry(.32, .42), blk); winFrame.position.set(Wd/2 + .001, .38, .03); winFrame.rotation.y = Math.PI/2; g.add(winFrame);
+    lbl(.1, .02, (c,w,h)=>{ c.fillStyle='#fff'; c.font=`600 ${h*.7}px "Bricolage Grotesque", sans-serif`; c.textAlign='center'; c.fillText('Bambu Lab', w/2, h*.75); }, Wd/2 + .0025, .565, .03, Math.PI/2);
+    // inside: the bed with its light bar, the gantry and the dual-nozzle head
+    box(.36, .012, .34, 0, .17, 0, new THREE.MeshStandardMaterial({ color:0x3a3c40, roughness:.6, metalness:.4 }));
+    box(.36, .02, .3, 0, .155, -.01, blk);
+    box(.34, .006, .006, 0, .148, .17, new THREE.MeshBasicMaterial({ color:0xcfe4ff }));
+    for (const s of [-1, 1]) box(.02, Hh-.1, .02, s*.16, (Hh-.1)/2 + .04, -.2, new THREE.MeshStandardMaterial({ color:0x8a8d92, metalness:.8, roughness:.3 }));
+    const part = new THREE.Mesh(new THREE.CylinderGeometry(.035, .045, .07, 6), new THREE.MeshStandardMaterial({ color:0xE8B44A, roughness:.5 })); part.position.set(.02, .211, .01); g.add(part);
+    for (const s of [-1, 1]) box(.02, .02, D-.08, s*(Wd/2 - .07), .5, 0, new THREE.MeshStandardMaterial({ color:0x8a8d92, metalness:.8, roughness:.3 }));
+    const gantry = new THREE.Group(); gantry.userData.dynamic = true; gantry.position.set(0, .5, 0); g.add(gantry);
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(Wd-.13, .025, .03), new THREE.MeshStandardMaterial({ color:0x5a5d62, metalness:.7, roughness:.35 })); gantry.add(rail);
+    const headG = new THREE.Group(); gantry.add(headG);
+    const hd = new THREE.Mesh(new THREE.BoxGeometry(.08, .1, .06), blk); hd.position.set(0, -.04, .03); headG.add(hd);
+    for (const s of [-1, 1]){ const tip = new THREE.Mesh(new THREE.ConeGeometry(.008, .022, 10), new THREE.MeshStandardMaterial({ color:0xd88a2a, metalness:.6, roughness:.3 })); tip.rotation.x = Math.PI; tip.position.set(s*.018, -.1, .03); headG.add(tip); }
+    const hdLogo = new THREE.Mesh(new THREE.PlaneGeometry(.06, .015), new THREE.MeshBasicMaterial({ transparent:true, map:canvasTex(240, 60, (c,w,h)=>{ c.fillStyle='#d9d9d9'; c.font='600 30px "Bricolage Grotesque", sans-serif'; c.textAlign='center'; c.fillText('Bambu Lab', w/2, 42); }) })); hdLogo.position.set(0, -.01, .0605); headG.add(hdLogo);
+    updaters.push(t => { headG.position.x = Math.sin(t*1.9)*.11; gantry.position.z = Math.sin(t*1.27)*.08; });
+    // AMS 2 Pro on the roof: smoky base, four spools under a clear dome
+    const amsY = Hh + .005;
+    box(.44, .095, .28, 0, amsY + .0475, 0, new THREE.MeshStandardMaterial({ color:0x26282c, roughness:.4, transparent:true, opacity:.92 }));
+    lbl(.11, .025, (c,w,h)=>{ c.fillStyle='#f2f2f2'; c.font=`700 ${h*.75}px "Bricolage Grotesque", sans-serif`; c.fillText('AMS 2', 2, h*.8); c.font=`600 ${h*.35}px sans-serif`; c.fillText('PRO', w*.72, h*.72); }, .1, amsY + .075, .1405);
+    const spoolCols = [0xe6e6e6, 0x2b5fc4, 0x5aa34a, 0xc8492b];
+    spoolCols.forEach((col, i) => { const x = -.155 + i*.103;
+      const fil = new THREE.Mesh(new THREE.CylinderGeometry(.078, .078, .07, 32), new THREE.MeshStandardMaterial({ color:col, roughness:.55 })); fil.rotation.z = Math.PI/2; fil.position.set(x, amsY + .115, 0); g.add(fil);
+      for (const s of [-1, 1]){ const fl = new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, .006, 32), new THREE.MeshStandardMaterial({ color:0x2a2c30, roughness:.3, transparent:true, opacity:.85 })); fl.rotation.z = Math.PI/2; fl.position.set(x + s*.038, amsY + .115, 0); g.add(fl); }
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, .085, 16), blk); hub.rotation.z = Math.PI/2; hub.position.set(x, amsY + .115, 0); g.add(hub);
+      const feed = new THREE.Mesh(new THREE.CylinderGeometry(.018, .018, .05, 12), blk); feed.position.set(x, amsY + .04, .1); g.add(feed);
+      const fd = new THREE.Mesh(new THREE.BoxGeometry(.02, .015, .01), new THREE.MeshStandardMaterial({ color:0xd88a2a })); fd.position.set(x, amsY + .07, .121); g.add(fd); });
+    const dome = new THREE.Mesh(new THREE.CylinderGeometry(.13, .13, .44, 40, 1, true, -Math.PI/2, Math.PI), smokeLight); dome.rotation.z = Math.PI/2; dome.position.set(0, amsY + .095, 0); g.add(dome);
+    for (const s of [-1, 1]){ const cap2 = new THREE.Mesh(new THREE.CircleGeometry(.13, 40, 0, Math.PI), smokeLight); cap2.rotation.y = s*Math.PI/2; cap2.position.set(s*.22, amsY + .095, 0); g.add(cap2); }
+    addExhibit(g, { center:new THREE.Vector3(-21.0, 1.0, -1.35), normal:new THREE.Vector3(1,0,0), w:.7, h:.9, room:'exp', dist:2.0,
+      kick:'Rettner Hall Media Lab', title:'The 3D printer', cap:'A Bambu Lab H2D with an AMS 2 Pro, like the lab’s. I ran the 3D printing service: prepping files, running the printer, pricing jobs, and telling people their print was ready.' }); }
+
+  /* ---------- south wall (right): leading, clubs and the toolbox ---------- */
+  wallTitle(S, 7.5, 5.0, 'WHAT I’VE LED', 9);
+  expCard(S, 1.9, 2.35, 2.75, 2.3, { brand:'Juniors MD', sub:'Valencia', c1:'#6a2a0c', c2:'#c8622a', art:'tent',
+    kicker:'2022 – 2025', title:'Youth group leader', body:'Weekly activities for kids, plus three-day and week-long camps with storylines we wrote ourselves.' });
+  expCard(S, 5.0, 2.35, 2.75, 2.3, { brand:'American Space', sub:'Valencia', c1:'#0b2f5c', c2:'#b3202f', art:'pen',
+    kicker:'2023 – 2025', title:'Makers Club lead', body:'Led the Makers Club, teaching kids to build with 3D pens. Ran sound for the teen drama club and built backdrops.' });
+  expCard(S, 8.1, 2.35, 2.75, 2.3, { brand:'Rocketry Club', sub:'University of Rochester', c1:'#021e4d', c2:'#3a2a6a', art:'rocket',
+    kicker:'2026 – now', title:'Member', body:'The hands-on side of aerospace: structures and propulsion, avionics and control.' });
+  // toolbox: skills as chips instead of a paragraph
+  { const w = 4.4, h = 2.6, SC = 300;
+    const groups = [['Build', ['3D printing','Prototyping','Reading drawings','Hand tools'], '#c8622a'], ['Code', ['C / C++','GCC','CMake'], '#1d63a8'], ['Media', ['Cameras','Lighting','Live sound'], '#6a4a0c'], ['Languages', ['English','Spanish'], '#3a7a3a']];
+    const tx = canvasTex(w*SC, h*SC, (g,cw,ch)=>{ g.fillStyle='#0f1d44'; g.fillRect(0,0,cw,ch); g.fillStyle='#E8B44A'; g.fillRect(0,0,cw,8);
+      g.font='600 26px "JetBrains Mono", monospace'; g.fillText('TOOLBOX', 40, 62); g.fillStyle='#EFE8D8'; g.font='600 58px Fraunces, Georgia, serif'; g.fillText('What I bring', 40, 132);
+      let y = 200; for (const [name, chips, col] of groups){ g.fillStyle='#C9CFDE'; g.font='600 24px "JetBrains Mono", monospace'; g.fillText(name.toUpperCase(), 40, y + 34);
+        let x = 260; g.font='500 30px "Bricolage Grotesque", sans-serif'; for (const c of chips){ const tw = g.measureText(c).width + 44; if (x + tw > cw - 30){ x = 260; y += 62; }
+          g.fillStyle = col; g.beginPath(); g.roundRect(x, y, tw, 50, 25); g.fill(); g.fillStyle='#fff'; g.fillText(c, x + 22, y + 35); x += tw + 14; }
+        y += 92; } });
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map:tx, color:0xe2ddd0 })); place(m, S, 13.0, 2.45, .03);
+    const back = new THREE.Mesh(new THREE.BoxGeometry(w+.06, h+.06, .03), trimMat); place(back, S, 13.0, 2.45, .0);
+    addExhibit(m, { center:onWall(S, 13.0, 2.45, .05), normal:S.n.clone(), w, h, room:'exp', kick:'Toolbox', title:'What I bring', cap:'Build: 3D printing, prototyping, reading drawings, hand tools. Code: C/C++, GCC, CMake. Media: cameras, lighting, live sound. Languages: English and Spanish.' }); }
+  pictureLight(S, 7.5, 3.55, 13, 2.3);
+  // a 3D pen on a little shelf under the American Space card
+  { const sh = new THREE.Group(); place(sh, S, 5.0, .95, .0);
+    const board = new THREE.Mesh(new THREE.BoxGeometry(1.0, .03, .22), woodMat); board.position.z = .11; sh.add(board);
+    const pen = new THREE.Mesh(new THREE.CylinderGeometry(.018, .014, .2, 16), new THREE.MeshStandardMaterial({ color:0x2f6fd6, roughness:.4 })); pen.rotation.z = Math.PI/2 - .2; pen.rotation.y = .4; pen.position.set(-.2, .035, .12); sh.add(pen);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(.012, .03, 12), brassMat); tip.rotation.z = -Math.PI/2 - .2; tip.position.set(-.1, .05, .1); sh.add(tip);
+    const curve = new THREE.CatmullRomCurve3(Array.from({ length:40 }, (_, i) => { const a = i*.5; return new THREE.Vector3(.2 + Math.cos(a)*.06, .03 + i*.004, .11 + Math.sin(a)*.06); }));
+    const coil = new THREE.Mesh(new THREE.TubeGeometry(curve, 160, .006, 6), new THREE.MeshStandardMaterial({ color:0xE8B44A, roughness:.5 })); sh.add(coil);
+    addExhibit(sh, { center:onWall(S, 5.0, 1.0, .15), normal:S.n.clone(), w:1.0, h:.4, room:'exp', dist:1.6, kick:'American Space Valencia', title:'A 3D pen', cap:'What we built with in the Makers Club. Kids drew in the air and made little towers and spirals like this one.' }); }
+  // the model rocket stands next to the Rocketry card
+  { const g = new THREE.Group(); g.position.set(-17.1, 0, 6.05); world.add(g); OBST.push({ x:-17.1, z:6.05, r:.45 });
     const stand = new THREE.Mesh(new THREE.CylinderGeometry(.4,.45,.12,32), frameMat); stand.position.y=.06; g.add(stand); blockers.push(stand);
     const white = new THREE.MeshStandardMaterial({ color:0xf1ece0, roughness:.5 });
     const tube = new THREE.Mesh(new THREE.CylinderGeometry(.11,.11,1.5,32), white); tube.position.y = .95; g.add(tube);
@@ -1203,8 +1379,11 @@ function drawTV(){
     const band = new THREE.Mesh(new THREE.CylinderGeometry(.113,.113,.08,32), trimMat); band.position.y = 1.45; g.add(band);
     const finM = new THREE.MeshStandardMaterial({ color:0xc8402e, roughness:.5 });
     for (let i=0;i<3;i++){ const f = new THREE.Mesh(new THREE.BoxGeometry(.01,.34,.22), finM); const a = i*Math.PI*2/3; f.position.set(Math.sin(a)*.2, .36, Math.cos(a)*.2); f.rotation.y = a; g.add(f); }
-    addExhibit(g, { center:new THREE.Vector3(-11.5, 1.2, 5.2), normal:new THREE.Vector3(0,0,-1), w:.6, h:2.1, room:'exp', dist:2.6,
+    addExhibit(g, { center:new THREE.Vector3(-17.1, 1.2, 6.05), normal:new THREE.Vector3(0,0,-1), w:.6, h:2.1, room:'exp', dist:2.6,
       kick:'Rocketry Club', title:'A model rocket', cap:'A stand-in for now. When the club flies something I worked on, the real one goes here.' }); }
+  // a rug in the middle so the room isn't just floor
+  { const rug = new THREE.Mesh(new THREE.PlaneGeometry(5.5, 3.6), new THREE.MeshStandardMaterial({ roughness:1, map:canvasTex(550, 360, (g,w,h)=>{ g.fillStyle='#132457'; g.fillRect(0,0,w,h); g.strokeStyle='#E8B44A'; g.lineWidth=6; g.strokeRect(18,18,w-36,h-36); g.lineWidth=2; g.strokeRect(34,34,w-68,h-68); }) }));
+    rug.rotation.x = -Math.PI/2; rug.position.set(-15, .012, 0); world.add(rug); }
 }
 
 /* =========================================================
