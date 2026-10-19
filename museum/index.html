@@ -1252,11 +1252,20 @@ function drawTV(){
   // a museum card: brand-coloured header with a wordmark and a drawing, then the text
   function expCard(W, t, y, w, h, o){
     const SC = 300, pw = Math.round(w*SC), ph = Math.round(h*SC), hb = Math.round(Math.min(ph*.3, 120*SC/300*1.4));
-    const tx = canvasTex(pw, ph, (g)=>{
+    const th = hb*.78, tile = () => { const im = o._img, asp = im ? im.naturalWidth/im.naturalHeight : (o.la || 1);
+      return o.fill ? [th, th] : [THREE.MathUtils.clamp(asp*th*.84 + th*.16, th, th*3.2), th]; };
+    const draw = (g)=>{
       g.fillStyle='#EFE8D8'; g.fillRect(0,0,pw,ph);
       const gr = g.createLinearGradient(0,0,pw,hb); gr.addColorStop(0,o.c1); gr.addColorStop(1,o.c2); g.fillStyle=gr; g.fillRect(0,0,pw,hb); g.fillStyle='#E8B44A'; g.fillRect(0,hb,pw,6);
-      if (o.art){ g.save(); g.strokeStyle='rgba(255,255,255,.92)'; g.fillStyle='rgba(255,255,255,.92)'; g.lineWidth=5; g.lineCap='round'; g.lineJoin='round'; ART[o.art](g, pw - hb*1.45, hb*.14, hb*1.3, hb*.72); g.restore(); }
-      let bf = hb*.3; const maxW = pw - hb*1.6 - 40; g.fillStyle='#fff'; g.font=`600 ${bf}px Fraunces, Georgia, serif`; while (g.measureText(o.brand).width > maxW && bf > 14){ bf *= .94; g.font=`600 ${bf}px Fraunces, Georgia, serif`; }
+      const [tw2, th2] = tile(), tx0 = pw - tw2 - hb*.12, ty0 = (hb - th2)/2;
+      if (o.logo){ // the organisation's logo on a white tile (or full-bleed for square logos that have their own background)
+        g.save(); g.shadowColor='rgba(0,0,0,.35)'; g.shadowBlur=12; g.fillStyle='#fff'; g.beginPath(); g.roundRect(tx0, ty0, tw2, th2, 12); g.fill(); g.restore();
+        if (o._img){ const im = o._img; g.save(); g.beginPath(); g.roundRect(tx0, ty0, tw2, th2, 12); g.clip();
+          if (o.fill) g.drawImage(im, tx0, ty0, tw2, th2);
+          else { const pd = th2*.1, r = Math.min((tw2-2*pd)/im.naturalWidth, (th2-2*pd)/im.naturalHeight), iw = im.naturalWidth*r, ih = im.naturalHeight*r; g.drawImage(im, tx0 + (tw2-iw)/2, ty0 + (th2-ih)/2, iw, ih); }
+          g.restore(); } }
+      else if (o.art){ g.save(); g.strokeStyle='rgba(255,255,255,.92)'; g.fillStyle='rgba(255,255,255,.92)'; g.lineWidth=5; g.lineCap='round'; g.lineJoin='round'; ART[o.art](g, pw - hb*1.45, hb*.14, hb*1.3, hb*.72); g.restore(); }
+      let bf = hb*.3; const maxW = (o.logo ? tx0 : pw - hb*1.6) - 54; g.fillStyle='#fff'; g.font=`600 ${bf}px Fraunces, Georgia, serif`; while (g.measureText(o.brand).width > maxW && bf > 14){ bf *= .94; g.font=`600 ${bf}px Fraunces, Georgia, serif`; }
       g.fillText(o.brand, 34, hb*.52); if (o.sub){ g.font=`600 ${hb*.12}px "JetBrains Mono", monospace`; g.fillStyle='rgba(255,255,255,.78)'; g.fillText(o.sub.toUpperCase(), 36, hb*.52 + hb*.27); }
       const paras = Array.isArray(o.body) ? o.body : [[null, o.body]], pad = 34, top = hb + 22;
       const lay = (k, draw) => { let yy = top; const kf = 22*k, tf = 46*k, bfz = 25*k, hf = 25*k;
@@ -1266,7 +1275,9 @@ function drawTV(){
           if (hd){ g.font = `600 ${hf}px "Bricolage Grotesque", system-ui, sans-serif`; g.fillStyle = '#8a6a2a'; yy += hf*1.25; if (draw) g.fillText(hd, pad, yy); }
           g.font = `400 ${bfz}px "Bricolage Grotesque", system-ui, sans-serif`; g.fillStyle = '#2c3655'; yy += bfz*1.35; yy = draw ? wrap(g, tx2, pad, yy, pw-2*pad, bfz*1.36) : measure(g, tx2, yy, bfz*1.36, pw-2*pad); }
         return yy; };
-      let k = 1.9; while (k > .5 && lay(k, false) > ph - 30) k *= .96; lay(k, true); });
+      let k = 1.9; while (k > .5 && lay(k, false) > ph - 30) k *= .96; lay(k, true); };
+    const tx = canvasTex(pw, ph, draw);
+    if (o.logo){ const im = new Image(); im.onload = () => { o._img = im; draw(tx.userData.cv.getContext('2d')); tx.needsUpdate = true; }; im.src = o.logo; }
     const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map:tx, color:0xe2ddd0 })); place(m, W, t, y, .03);
     const back = new THREE.Mesh(new THREE.BoxGeometry(w+.06, h+.06, .03), frameMat); place(back, W, t, y, .0);
     const cap = Array.isArray(o.body) ? o.body.map(([hd, b]) => (hd ? hd + ': ' : '') + b).join(' ') : o.body;
@@ -1277,14 +1288,14 @@ function drawTV(){
   wallTitle(N, 8, 5.0, 'WHERE I STUDIED', 8);
   hang(N, 3.1, 3.2, { src:'ex/ur-meliora', w:2.5, h:2.5/1.328, depth:0, kick:'University of Rochester', title:'Meliora', cap:'The Meliora letters in front of Rush Rhees Library, at sunset. “Ever better” is the university’s motto.' });
   hang(N, 5.75, 3.2, { src:'ex/ur-snow', w:1.4, h:1.4/.753, depth:0, kick:'University of Rochester', title:'First real snow', cap:'A Rochester winter, for someone from Valencia. The banners get it worst.' });
-  expCard(N, 4.4, 1.45, 4.6, 1.2, { brand:'University of Rochester', sub:'Hajim School of Engineering', c1:'#021e4d', c2:'#0a3a85', art:'shield',
+  expCard(N, 4.4, 1.45, 4.6, 1.2, { brand:'University of Rochester', sub:'Hajim School of Engineering', c1:'#021e4d', c2:'#0a3a85', art:'shield', logo:'ex/logo-hajim.png', la:1.41,
     kicker:'2025 – 2029 · Rochester, NY', title:'B.S. Mechanical Engineering', body:'Minors in Aerospace Engineering and ECE (Robotics). Merit scholarship.' });
   hang(N, 11.2, 3.2, { src:'ex/ies-building', w:3.1, h:3.1/1.778, depth:0, kick:'IES Maria Carbonell i Sánchez', title:'My high school', cap:'IES Maria Carbonell i Sánchez in Benetússer, Valencia, on one of its many sunny days.' });
   { const m = photoMesh(tex('ex/ies-logo.jpg'), 1.6, 1.6/4.472, 0, 0); place(frameAround(m, 1.6, 1.6/4.472), N, 14.1, 3.75, .06); }
   { const pl = new THREE.Mesh(new THREE.PlaneGeometry(1.6, .9), new THREE.MeshBasicMaterial({ map:canvasTex(480, 270, (g,w,h)=>{ g.fillStyle='#0f1d44'; g.fillRect(0,0,w,h); g.fillStyle='#E8B44A'; g.fillRect(0,0,w,5);
       g.font='600 20px "JetBrains Mono", monospace'; g.fillText('TWO DIPLOMAS', 26, 46); g.fillStyle='#EFE8D8'; g.font='600 30px Fraunces, Georgia, serif'; g.fillText('Academic Performance', 26, 104); g.fillText('Teamwork & Good Attitude', 26, 156);
       g.fillStyle='#C9CFDE'; g.font='22px "Bricolage Grotesque", sans-serif'; g.fillText('Benetússer, Valencia, Spain', 26, 222); }) })); place(pl, N, 14.1, 2.85, .03); }
-  expCard(N, 12.0, 1.45, 4.6, 1.2, { brand:'IES Maria Carbonell i Sánchez', sub:'Benetússer · Valencia', c1:'#1b4fa8', c2:'#3d7be0', art:'cap',
+  expCard(N, 12.0, 1.45, 4.6, 1.2, { brand:'IES Maria Carbonell i Sánchez', sub:'Benetússer · Valencia', c1:'#1b4fa8', c2:'#3d7be0', art:'cap', logo:'ex/ies-logo.jpg', la:4.47, fill:false,
     kicker:'Until 2025', title:'Middle and high school', body:'Diploma for Academic Performance, and Diploma for Teamwork and Good Attitude.' });
 
   /* ---------- west wall (straight ahead): where I've worked ---------- */
@@ -1294,13 +1305,13 @@ function drawTV(){
     jobsT.forEach((t, i) => { const dot = new THREE.Mesh(new THREE.SphereGeometry(.08, 16, 12), trimMat); place(dot, tl, t, 4.0, .05);
       const lab = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .3), new THREE.MeshBasicMaterial({ transparent:true, depthWrite:false, map:canvasTex(780, 90, (g,w,h)=>{ g.textAlign='center'; g.fillStyle='#E8B44A'; g.font='600 50px "JetBrains Mono", monospace'; g.fillText(jobsWhen[i], w/2, 62); }) }));
       place(lab, tl, t, 4.32, .03); }); }
-  expCard(tl, 2.4, 2.45, 3.4, 2.3, { brand:'EDSI', sub:'Rochester Hills, Michigan', c1:'#0b2f5c', c2:'#1d63a8', art:'arm',
+  expCard(tl, 2.4, 2.45, 3.4, 2.3, { brand:'EDSI', sub:'Rochester Hills, Michigan', c1:'#0b2f5c', c2:'#1d63a8', art:'arm', logo:'ex/logo-edsi.png', la:2.31,
     kicker:'Summer 2024', title:'Prototype Assembly', body:'Built prototype robotic tooling for automotive and other clients, about 40 hours a week. I read the mechanical and electrical drawings, planned each assembly, and built it by hand.' });
-  expCard(tl, 7.0, 2.45, 4.0, 2.3, { brand:'Rettner Hall Media Lab', sub:'University of Rochester', c1:'#021e4d', c2:'#6a4a0c', art:'gear',
+  expCard(tl, 7.0, 2.45, 4.0, 2.3, { brand:'Rettner Hall Media Lab', sub:'University of Rochester', c1:'#b3253e', c2:'#2a7189', art:'gear', logo:'ex/logo-rettner.png', fill:true,
     kicker:'2025 – now', title:'From assistant to lead', body:[
       ['Digital Media Assistant · 2025 – 2026', 'Help desk and gear loans: cameras, lighting, microphones, and showing people how to use them. I also ran the lab’s 3D printing service.'],
       ['Rettner Lead · Aug 2026 – now', 'I co-build the weekly schedule for a team of 11, help hire and train new staff, and am the link between the team and our supervisor.'] ] });
-  expCard(tl, 11.6, 2.45, 3.4, 2.3, { brand:'Hajim School', sub:'Mechanical Engineering', c1:'#3a1a5c', c2:'#0a3a85', art:'plane',
+  expCard(tl, 11.6, 2.45, 3.4, 2.3, { brand:'Hajim School', sub:'Mechanical Engineering', c1:'#3a1a5c', c2:'#0a3a85', art:'plane', logo:'ex/logo-ur.png', la:1.51,
     kicker:'Sept 2026 – now', title:'Undergraduate TA, ME 102', body:'Intro to Aerospace Engineering with Prof. John Lambropoulos. I lead a workshop section, hold office hours and grade homework.' });
 
   /* the gear I lent out, in front of the Rettner card: a Nikon D5100 on a felt-topped plinth */
@@ -1415,11 +1426,11 @@ function drawTV(){
 
   /* ---------- south wall (right): leading, clubs and the toolbox ---------- */
   wallTitle(S, 7.5, 5.0, 'WHAT I’VE LED', 9);
-  expCard(S, 1.9, 2.35, 2.75, 2.3, { brand:'Juniors MD', sub:'Valencia', c1:'#6a2a0c', c2:'#c8622a', art:'tent',
+  expCard(S, 1.9, 2.35, 2.75, 2.3, { brand:'Juniors MD', sub:'Benetússer, Valencia', c1:'#6a2a0c', c2:'#c8622a', art:'tent', logo:'ex/logo-juniors.png', la:.98,
     kicker:'2022 – 2025', title:'Youth group leader', body:'Weekly activities for kids, plus three-day and week-long camps with storylines we wrote ourselves.' });
-  expCard(S, 5.0, 2.35, 2.75, 2.3, { brand:'American Space', sub:'Valencia', c1:'#0b2f5c', c2:'#b3202f', art:'pen',
+  expCard(S, 5.0, 2.35, 2.75, 2.3, { brand:'American Space', sub:'Valencia', c1:'#0b2f5c', c2:'#b3202f', art:'pen', logo:'ex/logo-amspace.png', la:2.37,
     kicker:'2023 – 2025', title:'Makers Club lead', body:'Led the Makers Club, teaching kids to build with 3D pens. Ran sound for the teen drama club and built backdrops.' });
-  expCard(S, 8.1, 2.35, 2.75, 2.3, { brand:'Rocketry Club', sub:'University of Rochester', c1:'#021e4d', c2:'#3a2a6a', art:'rocket',
+  expCard(S, 8.1, 2.35, 2.75, 2.3, { brand:'Rocketry Club', sub:'University of Rochester', c1:'#021e4d', c2:'#3a2a6a', art:'rocket', logo:'ex/logo-rocketry.png', fill:true,
     kicker:'2026 – now', title:'Member', body:'The hands-on side of aerospace: structures and propulsion, avionics and control.' });
   // toolbox: skills as chips instead of a paragraph
   { const w = 4.4, h = 2.6, SC = 300;
