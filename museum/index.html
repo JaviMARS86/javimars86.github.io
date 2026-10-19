@@ -1279,7 +1279,7 @@ let apolloBoard, NEAR = null, NEAR_READY = false;
          so anything transparent drawn later would paint over him and make him look see-through */
       splatObj.traverse(o => { o.renderOrder = 1000; });
       apolloEx.title = 'Apollo, in 3D'; apolloEx.kick = 'Exhibit 00 · Gaussian splat';
-      apolloEx.cap = 'A real 3D scan: about 280,000 tiny blurry splats, trained on my laptop’s GPU from videos of me walking all the way around him (the back ones were the hard part). Walk around and look from any side.';
+      apolloEx.cap = 'A real 3D scan: about 300,000 tiny blurry splats, trained on my laptop’s GPU from videos of me walking all the way around him (the back ones were the hard part). Walk around and look from any side.';
       if (focus === apolloEx) setFocus(apolloEx);
     }).catch(e => { console.warn('splat failed, keeping the 360 version', e); splatState = 'failed'; if (splatObj) splatObj.visible = false; mat.visible = true; });
   }
