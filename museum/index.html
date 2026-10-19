@@ -1218,6 +1218,9 @@ let apolloBoard, NEAR = null, NEAR_READY = false;
       const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(SPLAT.tiltX, SPLAT.yaw, SPLAT.tiltZ, 'YXZ'));
       return v.addSplatScene(blobUrl, { format:GS.SceneFormat.Splat, showLoadingUI:false, scale:[SPLAT.scale, SPLAT.scale, SPLAT.scale], position:[0, SPLAT.y, -15], rotation:[q.x, q.y, q.z, q.w] });
     }).then(() => { splatState = 'ready'; mat.visible = false;
+      /* draw the splat after every other see-through thing (light cone, decals): splats don't write depth,
+         so anything transparent drawn later would paint over him and make him look see-through */
+      splatObj.traverse(o => { o.renderOrder = 1000; });
       apolloEx.title = 'Apollo, in 3D'; apolloEx.kick = 'Exhibit 00 · Gaussian splat';
       apolloEx.cap = 'A real 3D scan: about 280,000 tiny blurry splats, trained on my laptop’s GPU from videos of me walking all the way around him (the back ones were the hard part). Walk around and look from any side.';
       if (focus === apolloEx) setFocus(apolloEx);
@@ -1332,7 +1335,7 @@ function walkTo(target, look, onArrive){
 function pointAt(s){ let acc = 0; for (let i=0;i<move.segL.length;i++){ if (acc + move.segL[i] >= s || i === move.segL.length-1){ const k = move.segL[i] ? (s-acc)/move.segL[i] : 1; return new THREE.Vector3().lerpVectors(move.pts[i], move.pts[i+1], THREE.MathUtils.clamp(k,0,1)); } acc += move.segL[i]; } return move.pts.at(-1).clone(); }
 function standFor(ex){
   if (ex.track) return new THREE.Vector3(13.2, EYE, 3.0);
-  const vt = Math.tan(THREE.MathUtils.degToRad(camera.fov)/2), ht = vt*camera.aspect;
+  const vt = Math.tan(THREE.MathUtils.degToRad(baseFov)/2), ht = vt*camera.aspect;
   const fit = Math.max((ex.w/2 + .55)/ht, (ex.h/2 + .55)/vt) + .1;
   const dist = ex.dist ? ex.dist*(camera.aspect < .8 ? 1.25 : 1) : THREE.MathUtils.clamp(fit, 2.0, 6.5);
   const p = ex.center.clone().addScaledVector(ex.normal, dist); p.y = EYE;
@@ -1447,12 +1450,24 @@ function pick(cx, cy){
   return null;
 }
 let down = null;
-canvas.addEventListener('pointerdown', e => { down = { x:e.clientX, y:e.clientY, yaw:cam.yaw, pitch:cam.pitch, moved:false }; canvas.setPointerCapture(e.pointerId); kickVideo(); });
+/* zoom: mouse wheel or two-finger pinch narrows the field of view (1x to 4x) */
+let baseFov = 62, zoom = 1, zoomT = 1, pinch = null; const touches = new Map();
+const ZMIN = 1, ZMAX = 4;
+const pinchDist = () => { const [a, b] = [...touches.values()]; return Math.hypot(a.x-b.x, a.y-b.y); };
+canvas.addEventListener('wheel', e => { e.preventDefault(); zoomT = THREE.MathUtils.clamp(zoomT * Math.exp(-e.deltaY * .0015), ZMIN, ZMAX); }, { passive:false });
+canvas.addEventListener('pointerdown', e => { touches.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if (touches.size === 2){ pinch = { d0: pinchDist(), z0: zoomT }; down = null; canvas.classList.remove('drag'); return; }
+  if (touches.size > 2) return;
+  down = { x:e.clientX, y:e.clientY, yaw:cam.yaw, pitch:cam.pitch, moved:false }; canvas.setPointerCapture(e.pointerId); kickVideo(); });
+const endTouch = e => { touches.delete(e.pointerId); if (touches.size < 2 && pinch){ pinch = null; down = null; } };
+canvas.addEventListener('pointercancel', endTouch);
 canvas.addEventListener('pointermove', e => { mouse = { x:e.clientX, y:e.clientY, dirty:true };
+  if (touches.has(e.pointerId)) touches.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if (pinch && touches.size === 2){ zoomT = THREE.MathUtils.clamp(pinch.z0 * pinchDist() / Math.max(pinch.d0, 1), ZMIN, ZMAX); return; }
   if (!down) return; const dx = e.clientX-down.x, dy = e.clientY-down.y;
   if (!down.moved && Math.abs(dx)+Math.abs(dy) > 6){ down.moved = true; canvas.classList.add('drag'); if (move){ move.toYaw = null; move.toPitch = null; } }
-  if (down.moved){ cam.yaw = down.yaw - dx*.0045; cam.pitch = THREE.MathUtils.clamp(down.pitch + dy*.0038, -1.1, 1.1); } });
-canvas.addEventListener('pointerup', e => { canvas.classList.remove('drag');
+  if (down.moved){ cam.yaw = down.yaw - dx*.0045/zoom; cam.pitch = THREE.MathUtils.clamp(down.pitch + dy*.0038/zoom, -1.1, 1.1); } });
+canvas.addEventListener('pointerup', e => { const wasPinch = !!pinch; endTouch(e); canvas.classList.remove('drag'); if (wasPinch){ down = null; return; }
   if (down && !down.moved){ const p = pick(e.clientX, e.clientY);
     if (p?.ex){ if (focus === p.ex && p.ex.action && !move) p.ex.action.fn(); else visit(p.ex); }
     else if (p?.floor){ setFocus(null); walkTo(clampInRoom(new THREE.Vector3(p.floor.x, EYE, p.floor.z), p.room)); } }
@@ -1471,7 +1486,7 @@ function kickVideo(){ if (videoKicked) return; videoKicked = true; for (const t 
    LOOP
    ========================================================= */
 function resize(){ renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth/innerHeight;
-  camera.fov = camera.aspect < .8 ? 74 : 62; camera.updateProjectionMatrix(); }
+  baseFov = camera.aspect < .8 ? 74 : 62; camera.fov = baseFov/zoom; camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
 const clock = new THREE.Clock(), fwd = new THREE.Vector3(), side = new THREE.Vector3(), look = new THREE.Vector3();
 let mapTick = 0;
@@ -1511,6 +1526,7 @@ function frame(){
   ring.scale.setScalar(1 + Math.sin(t*3)*.04);
   cull();
   if (++mapTick % 3 === 0) drawMap();
+  if (Math.abs(zoomT - zoom) > .001){ zoom += (zoomT - zoom) * Math.min(1, dt*12); if (Math.abs(zoomT - zoom) < .002) zoom = zoomT; camera.fov = baseFov/zoom; camera.updateProjectionMatrix(); }
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
