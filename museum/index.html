@@ -1202,7 +1202,7 @@ let apolloBoard, NEAR = null, NEAR_READY = false;
   });
   /* the real thing: a Gaussian splat trained on my laptop's GPU from two videos circling him.
      It only loads when you're in or next to the Apollo room; until then (or if it can't load) the 360 version stays. */
-  const SPLAT = { url:'ex/apollo.splat', scale:.9, yaw:Math.PI*1.5, y:1.075, sway:.5, tiltX:.2, tiltZ:0 }; window.__splat = SPLAT;
+  const SPLAT = { url:'ex/apollo.splat', scale:.9, yaw:0, y:1.055, sway:.5, tiltX:0, tiltZ:0 }; window.__splat = SPLAT;
   let splatGroup = null, splatState = 'idle';
   function loadSplat(){
     if (splatState !== 'idle') return; splatState = 'loading';
