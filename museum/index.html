@@ -590,18 +590,56 @@ let galaxyMesh;
 { // Builds
   const N = wf('builds','N'), E = wf('builds','E'), S = wf('builds','S');
   infoStand('builds', doorOf('me','builds'), -1, { kicker:'Me · Room 2', title:'Builds', body:'LEGO, model kits, wood, beads: anything with a manual, too many pieces and a free afternoon. That probably explains the engineering.' });
-  // LEGO Milky Way: hung on the wall as a relief you can see the pieces of
-  const w = 4.2, h = w/1.667;
-  const geo = new THREE.PlaneGeometry(w, h, 200, 120);
-  const mat = new THREE.MeshStandardMaterial({ map:tex('ex/lego-galaxy.jpg'), normalMap:tex('ex/lego-galaxy-n.jpg', false), normalScale:new THREE.Vector2(1.4, 1.4),
-    displacementMap:tex('ex/lego-galaxy-h.png', false), displacementScale:.05, roughness:.42, metalness:0 });
-  galaxyMesh = new THREE.Mesh(geo, mat);
-  const g = new THREE.Group(); const backing = new THREE.Mesh(new THREE.BoxGeometry(w+.04, h+.04, .06), darkMat); backing.position.z = -.03; g.add(backing, galaxyMesh);
+  // LEGO Milky Way, rebuilt as real bricks: an 80 x 48 stud grid, one piece per stud, stacked to the heights of the
+  // real set (layering checked against Stephan3321's Mecabricks model of set 31212) and coloured from my own photo of it.
+  const w = 4.2, NX = 80, NY = 48, P = w/NX, h = P*NY, PH = P*.4;
+  const CELLS = Uint8Array.from(atob('AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEJAQEBAQEBAQkBAQEBAQEBAQEBAQEBAQEBAQEJAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQkJCgkNAwoDAgIECwIKCgsJCQMECgEECQEBAQEBAQEBAQkBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQkMAQEBAQEBAQEBAQEBCQoLCgsDAQMBAQELAQEBAwMDBAILCwsJCQsLCQMKCwkBAQEBAQEBAQEBCgkBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEJDgELAQEBAQEBAQkBCQkBAQEEAQEBAQEBAQEBAQIDAwMDAgIDDAIDCQoMDAoKCwkBAQEBAQEBAQEBAQkJAQEBCQkBAQEBCQEJCQoNAQEBAQEBAQEBAQoBAQEBAQEBCQEBAQEBAQEBCgEBAQEBAQkMCQEBCQEJAQUCBAQBCwMDBAsLCgkJCQkBAQEBCQoJAQEBCQkBAQkJAQEBAQEBAQEBAQEBAQEBAQEBAQEBCgEBAQEJCgEBAQENAQEBAQEKDAsJAQkBCQkBDAEBAQkJBAQNBAMMCgkKCQkJCQkBAQEBAQEBAQEBAQEBCQEBAQEBAQkBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQkJAQkJAQkKCwkBCwkJCQkCCQkKCQkBAQkJCgsKDAsKDAoJCQkBAQEBAQEBAQkBAQEBAQEBAQEJCgILAQEBAQEBAQEBAQEBAQEBAQQBCQoCAQsECwMDCgwKCwsJCQkJCwMECgkCCQkBCQkKAwkECgoFCgkJCQkJAQEBAQEBAQEBAQkNAQEJCgEBAQEBAQEBAQEBAQEBAQEBAQEBAQsBCQILCwMDAwMJCgoKDAkKCgkLCQkJCQoLCgoKCQkKCgoKCgsECgoMDAsJCQkJAQEBAQEBAQEBAQEBAQECAQEBAQEBDQEBAQEBAQEEAQkCAQkJCgsKCwkBCwwLCwwLDQ0LCgwFCwoLCQoKCQoKCgkKCQkKCgkJAwoLCgkKCQkBAQoBAQkCAQEBCwEBAQEBAQEBAQEBAQEBAQEBAQILCgMFCwoJAQELCwQMCwwLBAsMBAoMDAsMDA0KDAwMCwsLCwwLDAoJCQkKCQkJCQoMDAoBCQkJCQsJAgEBAQEBAQEBAQoBAQEBAQEBAQEBCgMJAgMJCQsLCgsNDQsMDA0MDA0LCwsMCQwEDQ0NDQoMDQwNCgoLCgwKCQkKAgoDCwkKCwkJCQEJAQEBAQEBAgEBAQoBAQEBAQEBAQEBAQEJCQ0BCQoBCwwNDAwMBAwLCwsMDAwLCwwJAQEKCQkLDQUNDQkMDQwMDA0NCgkJCg0JCgsLCQkLCQkJCgEJAQEBAQEBAQMKCgEBAQEBAQEDCQICAgsJDAsKDQ0MCwUNDAwMDAkJCgEBCQsDDAsLDgsNBQwFDQwNDQ0NCwsMDAkJCgoLCgsLCg0KDAkJAQkLAgEKAQEOAQILAQEBAQEBAQMJAQECAQsLDQoMBQQNCwwMDAkBAQsMDAMNDQYNDAwMDQ0MDQsMDA0MDAwLDAwMDA0LBQoJDAoKCgsKCwoJCgEBAQEBCgEBAQECAgEBAQICAQUCAgELDAsMDA0LDAsNCgwFCQEMBAwNDA0NDA0NDQ0MDQ0NDA0NDAwMDA0MDQ0MDQsLCQ0JCwwMCwsLCwsKCwEBCQ4BAQECAgEKAQEBAQIBAQIBAQsKCwwLBQULDAsNCgkBBAwNBQUMDQ0MAw0NDA0NDQULDAUFDA0MDQsMBg0NDA0LCQwMDAwKDAwLBAwKAQEBCQwBCgIBAwIBAQEBAQEBAgEJCwkNDAwFBQQFBQkMDAsNDg0FDQ0ODAwNDQ0NDQwNDA0NDQwNDQ0FBAwGDA0MDQ0OCgwJDQoKDgwLAwoKAgoCCgECAQICAgEBAQoJBAkJAQoNDAoNCw0LDQUKDQ0ODQwMDQ0NCwwFBQ4NDQ0MDQ0MDA0MDQUNDAwMDA0NDAwMCgwKCwsMAgoMDQ0MDAoKAgIBCwEKAgICAQEBCQUJDAEBCgoMDQUFAwULDQUNBQ0FDAQNDQYMAwYMDA0MBg0NBg0MDA0NBQ0MDg0ODgwNDQUMDAoLCwsNCgYNCw4MDQkKCQoMAQoCAgIBAQEBAwwEAQEKCgsMCwsNBQ0CDQwNBgUMBA0NDgwNDAwLDQ0NCw0FDA0NBg0FDg4NDg0FDQ0FCgoODgwEAwwJDgsMDQsNCwIJCwkGAQICCgEBAQEMCQMBAQoKAwsKDgMEDAMNCwwNBQUNDQ0FDA0NDA4FBQ0NDgUODQUMCw0MDQ0NDQ0NBQsKDQwMCgwMCwsNBQwNDA0KAwkLCwkJCgICAQEBAQkEAQEBCgoMCg4MDA0MDQsNBAUMDg0FBQUMDQ0DDg0OCw0NDQwNDQ4NDA4FDQwOBgUKAQoLDQULCQ0MCwUFCgkODAoDCgkFBQkCCwIBAQkOCQMBAQEBCgkJDQ4LCwQMDQsGDQ0GDQYFDQ0MDQ0GDA0NDQwNDA0MDQ0NDA0MBAQCAQEDCgwMDQ0NBQMLDA0MDAsNDQIJDQ0LCQsKAgEBAQsBAQkFAQEBAQwMCgUMDgwMBQoODA0NDQ4NDQ0NDQUNDQUMDQ0MDg4MDQwMCwoBAQkNAwsMBQwMCwwKDgsOCwwMDQILCQINCwoKCgICAQEBCgEBBAoBAQEBBAwLBg0JBg0LDQoLDAMLBg0KCg0NDA0NDQwNDQwLCwsMCgkBCwwMDAsMDAwLDQoNDA4MBgwLCw0MCwsJCwoLCwsKAgIBAQEBAQoODAECAgIEDQsGBgsLCwwMDAsLDQsKBQ0LDg0KDA0LDQ0NDA4MCgwMCwwMCwoLDA0NDQULDgoNDQoMDgsNCwkKCgoLCwQDCgICDgEBAQEBAQEMAQEBAQICAwQCBgkKBgMFCw0JDAsMCwwECgwKCw0GBAwMCgwODgwNDQ4LDA0MDgwMCg4ODQoNCg0LCg0NCgsKCQoJCQwKCgIKAQEBAQEBAQIMAQIBAgIBBQYLCQ0NCwwMCw0JDgsJCgoKCg4GCwsMDQoLDAsKCwwMDgoLCwoKDA0NCwoNDA4EDg0JCwsLAgIMDg4KCwsCAgQBAQEBAQEEAQMKAgICAgEFDAULDgoKDQsNCgoLCgoLCgkNCwUNDAwMCwwMDAwMBgoKDA0ODg4OCw4OBgsKCgoLCwwKCgoLBgsKCwoDAwIKBQEBAQEBAQEJDQwBAQICAQEBBAYGBgYGBgoODAoMCg0FCwwKDAoJCQwFCwwKCQoMCwoKCgkLCgsKCwoJDgUMCw0LCwoKCwsKCwsLCwIDAgoLAQEBAQEBAQ0LBQwGAgICAgIBBAIMCwwKDA0KDgkLCgwECw0LCwoKCQoKCwwMBQoKDAkKCgoKAwoMCQUKCQoJDQoKCgENDAsKCgsOCgoKAwsBAQEBAQEBCQUFCQQLAQEEAgIBBQQNBA4LDgoNDgwGDgUDDgsLCQ0GCQsKCQoKCgwKCwsLDQsKCgoLCQkNCgwMCwsLAw4LDAkCCw4DCgoCAwEBAQEBAQEBAQkCAgQCDAEBAgIMAQEGBQUOCwkGAQwNDQsOBAUJCgoKCgkKCgkKCgoKAgsMCwwJCgsKDg0MDgwKCwwNCQwLCwILCwMLCwsKAQEBAQEBAQEBAQEBDAwCCgEBAQECAgEFBQsNDQkMBgwMCgwODA4ODAoLDAkNCgsJCgsLCgECDQ0LCwsLCQsLCQEOCwwKDAMLCwsDCwsDCwoJAQEJAQEBAQEBAQECBA4KAQwBAQICAgENAgQMDg4CDg4OCQ4MCg0OBgwGDA0LCgoNCwoBCQ4LCgwMCgoJAQ0DCwoMCwoKAwsKCwsLCwsKCgsBAQEBAQEBAQEBCgIBAQwODAEBAQoBAgICAgEMCgoCCw4ODgwJDAkKCwUMAwQKCQwMAg0MDA4NDAoLCgMBBgoLCgsDAwsDAwsLAwMLAQoLDAEBCgEBAQEBAQkBCgEBAQEBAQEBCgkBAgICAgIDBQMNDAUODQsNCwsKCwwNAQwNDQwLDQUMCwwNDg4LDAwOBgYLCwMDBAEMCgwMDQsCDQ4OCQEJAQoJAQEKAQEKAgkBCgkBCQIJAQECCgEBAQoCAQwFBgUMDA4LDg4LCgsLAgsLDAYNDgwLCg0GDgYODQ4NBgILAgQNCw0DDg0NAw0NDQwJAQkBCgkBCQEBAQoJAQEKAQEBAQEFCgELCgoBAgICCwICAQENDgsKDgoNDQwLCQsMDg4MCwwMDgoODQYFCw4GAw0MDg0DDAQODg4KDA0LAgEBAQEKCQEJCgEBCgEBAQoCAgoBAgECAgICCgECAgIKCgICAgsDBQUMDAwFBAsNDgsMCgoOBgQOAQ4ODg0ODAYMDQ0MCwwNBA0ODgkLCwwMAQEBAQEBAQoKAQEBAQICAQECAQIBAQECCgICAgIBAQECAgICAgoCAQ0JDA0EDQsJDQwLDg4ODg4KDg0MCw0MBQ0KDgsNDgkMCw0NCQsMDQ0BAQEBAQEBAgECAQEBAQoBAgIBAgIBAgICAgECAgICAgICAgICAgICCgoLCwIDDQsLDAwECgoNDAsNCwsLDQ0NDAsNDA0NCwoLCwwMDA4LCwEBAgEBAQEBAgECAgICAQIBAQICAgICAgICAgICAgIBCgoCAgICAgoCAgIDAgsLCwoKCg0KAwYODg4MDgsNBg4KDA0ODAsODg4NDg4MCwsCAgECAQEBAQICAQ0CAgICAQIBAgICAgICAgICAQICCgIBCwIBAgICCgoCAgICAgILCgIDCgsLBAwNCw0MCwMEBAsNDg4JAgwODgsLCwwECwsCAQIBDAEBAgICAgICAgEBAgECAgIBAgICAgICAgIKAgICAgoCAgICAgICCgICCgoCAgICAgoDAgILCwMDAwsCCgsDAwMDDA0LDQwLDAMDCgEBAQEBAQEBAQICAgICAQICAgECAgICAgIBAgICAgICAgICAgICCgICAgIKCgICCgoCAgICAgICAgIDCwIDAgMLAwsDAwoLCwMLCwMDAwsC'), c => c.charCodeAt(0));
+  const U0 = 0.02500, U1 = 0.96562, V0 = 1-0.04063, V1 = 1-0.97396;
+  const pos = [], uv = [], nrm = [], idx = [];
+  const quad = (a, b, c, d, n, uvs) => { const k = pos.length/3; for (const p of [a,b,c,d]) pos.push(...p); for (let i=0;i<4;i++) nrm.push(...n); uv.push(...uvs); idx.push(k,k+1,k+2, k,k+2,k+3); };
+  const lv = (i, j) => (i < 0 || j < 0 || i >= NX || j >= NY) ? 0 : (CELLS[j*NX+i] & 7);
+  const g2 = .035*P, SEG = 10, SR = P*.3, SH = P*.2;
+  for (let j=0;j<NY;j++) for (let i=0;i<NX;i++){
+    const L = lv(i,j), z = L*PH, x0 = -w/2 + i*P, x1 = x0+P, y1 = h/2 - j*P, y0 = y1-P;
+    const u0 = U0 + (U1-U0)*i/NX, u1 = U0 + (U1-U0)*(i+1)/NX, v1 = V0 + (V1-V0)*j/NY, v0 = V0 + (V1-V0)*(j+1)/NY;
+    const uc = (u0+u1)/2, vc = (v0+v1)/2, C = [uc,vc, uc,vc, uc,vc, uc,vc];
+    // top, inset a hair so every piece reads as its own
+    quad([x0+g2,y0+g2,z],[x1-g2,y0+g2,z],[x1-g2,y1-g2,z],[x0+g2,y1-g2,z],[0,0,1],[u0,v0,u1,v0,u1,v1,u0,v1]);
+    // sides wherever the neighbour sits lower (bottoms are hidden by the backing)
+    const s = [[i+1,j,[1,0,0]],[i-1,j,[-1,0,0]],[i,j-1,[0,1,0]],[i,j+1,[0,-1,0]]];
+    for (const [ni,nj,n] of s){ const zl = lv(ni,nj)*PH; if (zl >= z) continue;
+      const xa = n[0]>0 ? x1-g2 : n[0]<0 ? x0+g2 : x0+g2, xb = n[0]>0 ? x1-g2 : n[0]<0 ? x0+g2 : x1-g2;
+      const ya = n[1]>0 ? y1-g2 : n[1]<0 ? y0+g2 : y0+g2, yb = n[1]>0 ? y1-g2 : n[1]<0 ? y0+g2 : y1-g2;
+      const A = n[0]<0||n[1]>0 ? [xb,yb] : [xa,ya], B = n[0]<0||n[1]>0 ? [xa,ya] : [xb,yb];
+      quad([A[0],A[1],zl],[B[0],B[1],zl],[B[0],B[1],z],[A[0],A[1],z], n, C); }
+    // a stud on top where the photo shows one
+    if (CELLS[j*NX+i] & 8){ const cx = (x0+x1)/2, cy = (y0+y1)/2;
+      for (let s2=0;s2<SEG;s2++){ const a = s2/SEG*Math.PI*2, b = (s2+1)/SEG*Math.PI*2;
+        const pa = [cx+Math.cos(a)*SR, cy+Math.sin(a)*SR], pb = [cx+Math.cos(b)*SR, cy+Math.sin(b)*SR], m = (a+b)/2;
+        quad([pa[0],pa[1],z],[pb[0],pb[1],z],[pb[0],pb[1],z+SH],[pa[0],pa[1],z+SH],[Math.cos(m),Math.sin(m),0], C);
+        const k = pos.length/3; pos.push(cx,cy,z+SH, pa[0],pa[1],z+SH, pb[0],pb[1],z+SH); for (let q=0;q<3;q++) nrm.push(0,0,1);
+        const ua = uc + (pa[0]-cx)/P*(u1-u0), va = vc + (pa[1]-cy)/P*(v1-v0), ub = uc + (pb[0]-cx)/P*(u1-u0), vb = vc + (pb[1]-cy)/P*(v1-v0);
+        uv.push(uc,vc, ua,va, ub,vb); idx.push(k,k+1,k+2); } }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geo.setIndex(idx);
+  const bricks = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map:tex('ex/lego-galaxy.jpg'), roughness:.38, metalness:0, side:THREE.DoubleSide }));
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ color:0x141a3a, roughness:.6 }));
+  // invisible flat stand-in for clicking, so picking doesn't test thousands of little faces
+  galaxyMesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ transparent:true, opacity:0, depthWrite:false, colorWrite:false }));
+  galaxyMesh.position.z = 6*PH;
+  const g = new THREE.Group(); const backing = new THREE.Mesh(new THREE.BoxGeometry(w+.06, h+.06, .06), darkMat); backing.position.z = -.03;
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(w+.1, h+.1, 7*PH), darkMat); frame.position.z = 3.5*PH - .001;
+  frame.geometry = (() => { const outer = new THREE.Shape(); outer.moveTo(-w/2-.05,-h/2-.05); outer.lineTo(w/2+.05,-h/2-.05); outer.lineTo(w/2+.05,h/2+.05); outer.lineTo(-w/2-.05,h/2+.05);
+    const hole = new THREE.Path(); hole.moveTo(-w/2,-h/2); hole.lineTo(-w/2,h/2); hole.lineTo(w/2,h/2); hole.lineTo(w/2,-h/2); outer.holes.push(hole);
+    return new THREE.ExtrudeGeometry(outer, { depth:7*PH, bevelEnabled:false }); })(); frame.position.z = 0;
+  g.add(backing, floor, bricks, frame, galaxyMesh);
   place(g, N, 7, 2.55, .06);
   pictureLight(N, 7, 2.55 + h/2 + .05, w);
   const pl = placard('LEGO Milky Way', 'Hundreds of tiny pieces, and somewhere in there a “You are here” tile. I checked.', 'Built by hand'); place(pl, N, 7 + w/2 + .6, 1.25, .02);
   addExhibit(galaxyMesh, { center:onWall(N, 7, 2.55, .1), normal:N.n.clone(), w, h, room:'builds', kick:'Built by hand', title:'LEGO Milky Way',
-    cap:'Hundreds of tiny pieces, and somewhere in there a “You are here” tile. I checked. Shown here in 3D from my photo of it.' });
+    cap:'Hundreds of tiny pieces, and somewhere in there a “You are here” tile. I checked. Rebuilt here stud by stud: 3,840 pieces stacked to the real heights, coloured from my photo of it. Layering checked against Stephan3321\u2019s Mecabricks model of the set.' });
   // the rest on pedestals, a framed photo on each until they get scanned
   const items = [
     [9.6, 10.6, 'ex/build-porsche', 'Porsche 911', 'Mid build. Too many pieces, one free afternoon.'],
