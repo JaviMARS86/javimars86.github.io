@@ -106,17 +106,18 @@ button{font-family:inherit}
 <canvas id="c" aria-label="A 3D museum: a lobby with four wings. Click the floor to walk, click a piece to look closer."></canvas>
 
 <div class="top">
-  <div class="brand">My mind <em>palace</em></div>
+  <div class="brand" data-es="Mi palacio <em>mental</em>">My mind <em>palace</em></div>
   <nav class="rooms" id="rooms" aria-label="Rooms"></nav>
-  <button class="chip music" id="musicBtn" aria-pressed="false">&#9834; Music</button>
-  <a class="chip" href="../">&larr; site</a>
+  <button class="chip music" id="musicBtn" aria-pressed="false" data-es="&#9834; Música">&#9834; Music</button>
+  <button class="chip" id="langBtn" aria-label="Español / English">ES</button>
+  <a class="chip" href="../" data-es="&larr; inicio">&larr; home</a>
 </div>
 <canvas id="map" width="280" height="352" aria-label="Map of the museum. Click to walk there."></canvas>
 
 <div class="panel" role="region" aria-label="What you're looking at">
   <div class="info" aria-live="polite">
-    <div class="kick" id="kick">Lobby</div>
-    <h2 id="title">My mind palace</h2>
+    <div class="kick" id="kick" data-es="Vestíbulo">Lobby</div>
+    <h2 id="title" data-es="Mi palacio mental">My mind palace</h2>
     <p id="cap"></p>
     <div class="act"><a id="more" href="#" target="_blank" rel="noopener" hidden></a><button id="action" hidden></button></div>
   </div>
@@ -125,36 +126,58 @@ button{font-family:inherit}
 
 <div class="modal" id="musicModal" role="dialog" aria-modal="true" aria-labelledby="musicTitle">
   <div class="sheet">
-    <header><div><div class="kick">Listening corner</div><h3 id="musicTitle">What I listen to</h3></div>
+    <header><div><div class="kick" data-es="Rincón de música">Listening corner</div><h3 id="musicTitle" data-es="Lo que escucho">What I listen to</h3></div>
       <button class="x" data-close aria-label="Close">&times;</button></header>
     <div id="playlists"></div>
-    <p class="note">Close this window and the music keeps playing while you walk around. If you&rsquo;re not logged into Spotify, you&rsquo;ll hear 30-second previews.</p>
+    <p class="note" data-es="Cierra esta ventana y la música sigue sonando mientras paseas. Si no has iniciado sesión en Spotify, oirás avances de 30 segundos.">Close this window and the music keeps playing while you walk around. If you&rsquo;re not logged into Spotify, you&rsquo;ll hear 30-second previews.</p>
   </div>
 </div>
 
 <div class="modal" id="gameModal" role="dialog" aria-modal="true" aria-labelledby="gameTitle">
   <div class="sheet console">
-    <header><div><div class="kick">The game shelf</div><h3 id="gameTitle">Pick a game</h3></div>
+    <header><div><div class="kick" data-es="La estantería de juegos">The game shelf</div><h3 id="gameTitle" data-es="Elige un juego">Pick a game</h3></div>
       <button class="x" data-close aria-label="Close">&times;</button></header>
     <div class="grid" id="games"></div>
-    <div class="detail"><div><h4 id="gTitle"></h4><p id="gNote"></p></div><button class="btn" id="gPlay">&#9654; Play</button></div>
+    <div class="detail"><div><h4 id="gTitle"></h4><p id="gNote"></p></div><button class="btn" id="gPlay" data-es="&#9654; Jugar">&#9654; Play</button></div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
 
 <div id="load">
   <div class="box">
-    <h1>My mind <em>palace</em></h1>
-    <p>A lobby and four wings: me, my experience, Apollo and my projects. Click anywhere on the floor to walk there.</p>
+    <h1 data-es="Mi palacio <em>mental</em>">My mind <em>palace</em></h1>
+    <p data-es="Un vestíbulo y cuatro alas: yo, mi experiencia, Apollo y mis proyectos. Haz clic en cualquier punto del suelo para ir hasta allí.">A lobby and four wings: me, my experience, Apollo and my projects. Click anywhere on the floor to walk there.</p>
     <div class="bar"><i id="barfill"></i></div>
-    <button class="btn" id="enter">Enter</button>
-    <p id="nogl">Your browser can't run WebGL, so the mind palace won't open here. <a href="../">Back to the site</a>.</p>
+    <button class="btn" id="enter" data-es="Entrar">Enter</button>
+    <p id="nogl" data-es="Tu navegador no puede ejecutar WebGL, así que el palacio mental no se abre aquí. <a href=&quot;../portfolio/&quot;>Ver la versión 2D</a>.">Your browser can't run WebGL, so the mind palace won't open here. <a href="../portfolio/">See the 2D version</a>.</p>
   </div>
 </div>
 
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <script type="module">
 import * as THREE from 'three';
+import { ES } from './i18n-es.js';
+/* language: English by default, Spanish with ?lang=es (remembered). Canvas text and captions are looked up in ES by their English text. */
+const LANG = (() => { try { const q = new URLSearchParams(location.search).get('lang'); if (q === 'es' || q === 'en'){ localStorage.setItem('lang', q); return q; } return localStorage.getItem('lang') === 'es' ? 'es' : 'en'; } catch(e){ return 'en'; } })();
+document.documentElement.lang = LANG;
+const COLLECT = /[?&]collect/.test(location.search); if (COLLECT) window.__S = new Set();
+const HSP = String.fromCharCode(8202), ESU = {}; for (const k in ES) ESU[k.toUpperCase()] = ES[k].toUpperCase();
+let IN_WRAP = 0;
+function tr(s){ if (typeof s !== 'string' || !s.trim()) return s;
+  if (COLLECT && !IN_WRAP) window.__S.add(s.includes(HSP) ? s.split(HSP).join('') : s);
+  if (LANG !== 'es') return s;
+  if (ES[s]) return ES[s]; if (ESU[s]) return ESU[s];
+  if (s.includes(HSP)){ const p = s.split(HSP).join(''), r = ES[p] || ESU[p]; if (r) return r.split('').join(HSP); }
+  return s; }
+window.__tr = tr;
+{ const P = CanvasRenderingContext2D.prototype, ft = P.fillText, mt = P.measureText;
+  P.fillText = function(t, ...a){ return ft.call(this, tr(String(t)), ...a); };
+  P.measureText = function(t){ return mt.call(this, LANG === 'es' ? tr(String(t)) : t); }; }
+for (const el of document.querySelectorAll('[data-es]')){ if (LANG === 'es') el.innerHTML = el.dataset.es; }
+{ const lb = document.getElementById('langBtn'); lb.textContent = LANG === 'es' ? 'EN' : 'ES';
+  lb.onclick = () => { const u = new URL(location.href); u.searchParams.set('lang', LANG === 'es' ? 'en' : 'es'); location.href = u.toString(); }; }
+if (LANG === 'es') document.title = 'Mi palacio mental';
+for (const el of document.querySelectorAll('[data-es-label]')){ if (LANG === 'es') el.setAttribute('aria-label', el.dataset.esLabel); }
 
 /* =========================================================
    PLAN  (metres; north is -z). Every room is a rectangle;
@@ -222,12 +245,12 @@ function canvasTex(w, h, draw){
   const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; t.userData = { cv }; return t;
 }
 function wrap(g, text, x, y, maxW, lh){
-  let line = '', yy = y;
+  text = tr(text); let line = '', yy = y; IN_WRAP++;
   for (const w of text.split(' ')){ const test = line ? line+' '+w : w;
     if (g.measureText(test).width > maxW && line){ g.fillText(line, x, yy); line = w; yy += lh; } else line = test; }
-  if (line) g.fillText(line, x, yy); return yy;
+  if (line) g.fillText(line, x, yy); IN_WRAP--; return yy;
 }
-const measure = (g, text, y, lh, maxW) => { let line = '', yy = y; for (const wd of text.split(' ')){ const tt = line ? line+' '+wd : wd; if (g.measureText(tt).width > maxW && line){ line = wd; yy += lh; } else line = tt; } return yy; };
+const measure = (g, text, y, lh, maxW) => { text = tr(text); let line = '', yy = y; for (const wd of text.split(' ')){ const tt = line ? line+' '+wd : wd; if (g.measureText(tt).width > maxW && line){ line = wd; yy += lh; } else line = tt; } return yy; };
 const rnd = (() => { let s = 7; return () => (s = (s*16807) % 2147483647) / 2147483647; })();
 
 function woodTex(){ const t = canvasTex(512, 512, (g,w,h)=>{
@@ -424,7 +447,7 @@ function textCanvas(pw, ph, S, { kicker='', title='', body='', dark=false, w }){
 }
 function textPanel(w, h, p){ const S = 360; return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map:textCanvas(Math.round(w*S), Math.round(h*S), S, { ...p, w }), color:0xe2ddd0 })); }
 
-function addExhibit(obj, ex){ ex.obj = obj; exhibits.push(ex); clickables.push(obj); obj.traverse(o => { o.userData.ex = ex; }); return ex; }
+function addExhibit(obj, ex){ for (const f of ['kick','title','cap']) ex[f] = tr(ex[f]); if (ex.action) ex.action.label = tr(ex.action.label); ex.obj = obj; exhibits.push(ex); clickables.push(obj); obj.traverse(o => { o.userData.ex = ex; }); return ex; }
 
 function sizeOf(it){ const a = A[it.src]; let w = it.w, h = it.h; if (w && !h) h = w/a; if (h && !w) w = h*a; if (!w && !h){ w = a >= 1 ? 2.4 : 1.9*a; h = w/a; } return [w, h]; }
 function hang(W, t, y, it){
@@ -1017,8 +1040,9 @@ function drawTV(){
   g.fillStyle='#fff'; g.shadowColor='rgba(0,0,0,.6)'; g.shadowBlur=18; g.font=`600 ${G.t.length > 18 ? 58 : 72}px Fraunces, Georgia, serif`; g.fillText(G.t, 60, 400); g.shadowBlur=0;
   g.fillStyle='#ffe2a8'; g.font='600 26px "JetBrains Mono", monospace'; g.fillText(G.y.toUpperCase(), 64, 446);
   g.fillStyle='#dfe4f2'; g.font='400 32px "Bricolage Grotesque", sans-serif'; wrap(g, G.n, 64, 510, 640, 42);
-  g.fillStyle='#E8B44A'; g.beginPath(); g.roundRect(60, h-110, 270, 62, 31); g.fill();
-  g.fillStyle='#0D1938'; g.font='600 30px "Bricolage Grotesque", sans-serif'; g.fillText('▶  Click to play', 92, h-68);
+  g.font='600 30px "Bricolage Grotesque", sans-serif'; const bw = g.measureText('▶  Click to play').width + 64;
+  g.fillStyle='#E8B44A'; g.beginPath(); g.roundRect(60, h-110, bw, 62, 31); g.fill();
+  g.fillStyle='#0D1938'; g.fillText('▶  Click to play', 92, h-68);
   tvTex.needsUpdate = true;
 }
 {
@@ -1685,31 +1709,31 @@ function goRoom(k){ const r = ROOMS[k]; setFocus(null);
 const ui = { kick:document.getElementById('kick'), title:document.getElementById('title'), cap:document.getElementById('cap'), more:document.getElementById('more'), action:document.getElementById('action'), close:document.getElementById('close') };
 let curRoom = 'lobby';
 function showRoom(k){ const r = ROOMS[k];
-  ui.kick.textContent = r.wing ? 'Wing I · Me' : k === 'lobby' ? 'Lobby' : 'Wing'; ui.title.textContent = k === 'lobby' ? 'My mind palace' : r.name;
-  ui.cap.textContent = k === 'lobby' ? ROOM_TEXT.lobby : 'The stand by the door says what’s in here.'; ui.more.hidden = true; ui.action.hidden = true; ui.close.classList.remove('on'); }
+  ui.kick.textContent = tr(r.wing ? 'Wing I · Me' : k === 'lobby' ? 'Lobby' : 'Wing'); ui.title.textContent = tr(k === 'lobby' ? 'My mind palace' : r.name);
+  ui.cap.textContent = tr(k === 'lobby' ? ROOM_TEXT.lobby : 'The stand by the door says what’s in here.'); ui.more.hidden = true; ui.action.hidden = true; ui.close.classList.remove('on'); }
 function setGlow(ex, v){ if (!ex) return; ex.obj.traverse(o => { if (o.material?.uniforms?.glow) o.material.uniforms.glow.value = v; }); }
 function setFocus(ex){
   if (focus) setGlow(focus, 0); focus = ex;
   if (!ex){ showRoom(curRoom); return; }
   ui.kick.textContent = ex.kick || ''; ui.title.textContent = ex.title || ''; ui.cap.textContent = ex.cap || '';
-  if (ex.link){ ui.more.hidden = false; ui.more.href = ex.link; ui.more.textContent = 'See the repo ↗'; } else ui.more.hidden = true;
+  if (ex.link){ ui.more.hidden = false; ui.more.href = ex.link; ui.more.textContent = tr('See the repo ↗'); } else ui.more.hidden = true;
   if (ex.action){ ui.action.hidden = false; ui.action.textContent = ex.action.label; ui.action.onclick = ex.action.fn; } else ui.action.hidden = true;
   ui.close.classList.add('on');
 }
 ui.close.onclick = () => setFocus(null);
 const nav = document.getElementById('rooms'), navBtns = {};
-for (const k of NAV){ const b = document.createElement('button'); b.className = 'chip'; b.textContent = ROOMS[k].name; b.onclick = () => goRoom(k); nav.appendChild(b); navBtns[k] = b; }
+for (const k of NAV){ const b = document.createElement('button'); b.className = 'chip'; b.textContent = tr(ROOMS[k].name); b.onclick = () => goRoom(k); nav.appendChild(b); navBtns[k] = b; }
 function markRoom(k){ const top = ROOMS[k].wing || k; for (const [kk,b] of Object.entries(navBtns)) b.setAttribute('aria-current', kk === top ? 'true' : 'false'); }
 markRoom('lobby'); showRoom('lobby');
 const toast = document.getElementById('toast'); let toastT;
-function say(msg){ toast.textContent = msg; toast.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('on'), 3200); }
+function say(msg){ toast.textContent = tr(msg); toast.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('on'), 3200); }
 
 /* music */
 const musicModal = document.getElementById('musicModal'), musicBtn = document.getElementById('musicBtn'), plWrap = document.getElementById('playlists');
 let musicOn = false;
 for (const p of PLAYLISTS){ const d = document.createElement('div'); d.className = 'pl';
-  d.innerHTML = `<h4></h4><p></p><button class="load">▶ Load the ${p.name} player</button>`;
-  d.querySelector('h4').textContent = p.name; d.querySelector('p').textContent = p.desc; d.dataset.id = p.id;
+  d.innerHTML = `<h4></h4><p></p><button class="load"></button>`; d.querySelector('.load').textContent = LANG === 'es' ? `▶ Cargar el reproductor de ${p.name}` : `▶ Load the ${p.name} player`;
+  d.querySelector('h4').textContent = p.name; d.querySelector('p').textContent = tr(p.desc); d.dataset.id = p.id;
   d.querySelector('.load').onclick = () => loadPlayer(d); plWrap.appendChild(d); }
 function loadPlayer(d){ if (d.querySelector('iframe')) return; const f = document.createElement('iframe');
   f.src = `https://open.spotify.com/embed/playlist/${d.dataset.id}?utm_source=generator`; f.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture'; f.loading = 'lazy'; f.title = 'Spotify playlist';
@@ -1728,11 +1752,11 @@ GAMES.forEach((G, i) => { const b = document.createElement('button'); b.classNam
   b.style.background = `#111 url(${coverURL[i]}) center/cover`; b.innerHTML = '';
   b.setAttribute('aria-label', G.t); b.onclick = () => pickGame(i); gWrap.appendChild(b); });
 function pickGame(i){ selGame = i; drawTV(); [...gWrap.children].forEach((b,k) => b.setAttribute('aria-pressed', k===i ? 'true' : 'false'));
-  gTitle.textContent = GAMES[i].t; gNote.textContent = GAMES[i].n; }
+  gTitle.textContent = GAMES[i].t; gNote.textContent = tr(GAMES[i].n); }
 function openGames(){ pickGame(selGame); openModal(gameModal); }
 document.getElementById('gPlay').onclick = () => { closeModal(gameModal);
   const lines = ['Loading save file… 100% complete. Of course.', 'Insert disc… just kidding, this one lives in my head.', 'Press start. Then cancel your afternoon.'];
-  say(`${GAMES[selGame].t}: ${lines[selGame % lines.length]}`); };
+  say(`${GAMES[selGame].t}: ${tr(lines[selGame % lines.length])}`); };
 
 /* minimap */
 const map = document.getElementById('map'), mg = map.getContext('2d');
